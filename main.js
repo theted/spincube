@@ -4,6 +4,58 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 // Import constants
 import * as CONST from "./constants.js";
 
+// Load saved settings from localStorage if in development mode
+if (CONST.DEBUG) {
+  const savedSettings = localStorage.getItem("spincube-settings");
+  if (savedSettings) {
+    try {
+      const settings = JSON.parse(savedSettings);
+      console.log("Loading saved settings:", settings);
+
+      // Apply saved settings to constants
+      // Note: This doesn't modify the actual constants.js file,
+      // but overrides the values in memory for this session
+      for (const key in settings) {
+        if (key === "useMaterial") {
+          CONST.USE_GLASS_MATERIAL = settings[key];
+        } else if (key === "useIntenseBackground") {
+          CONST.USE_INTENSE_BACKGROUND = settings[key];
+        } else if (key === "metalness") {
+          CONST.METALNESS = settings[key];
+        } else if (key === "roughness") {
+          CONST.ROUGHNESS = settings[key];
+        } else if (key === "envMapIntensity") {
+          CONST.ENV_MAP_INTENSITY = settings[key];
+        } else if (key === "cubeSize") {
+          CONST.CUBE_SIZE = settings[key];
+        } else if (key === "spinSpeedX") {
+          CONST.INITIAL_SPIN_SPEED.x = settings[key];
+        } else if (key === "spinSpeedY") {
+          CONST.INITIAL_SPIN_SPEED.y = settings[key];
+        } else if (key === "bounceDuration") {
+          CONST.BOUNCE_DURATION = settings[key];
+        } else if (key === "bounceMaxScale") {
+          CONST.BOUNCE_MAX_SCALE = settings[key];
+        } else if (key === "springConstant") {
+          CONST.K_SPRING = settings[key];
+        } else if (key === "dampingFactor") {
+          CONST.K_DAMPING = settings[key];
+        } else if (key === "warpAmount") {
+          CONST.WARP_AMOUNT = settings[key];
+        } else if (key === "warpFrequency") {
+          CONST.WARP_FREQUENCY = settings[key];
+        } else if (key === "warpSpeed") {
+          CONST.WARP_SPEED = settings[key];
+        } else if (key === "checkerScale") {
+          CONST.CHECKER_SCALE = settings[key];
+        }
+      }
+    } catch (error) {
+      console.error("Error loading saved settings:", error);
+    }
+  }
+}
+
 // Import shaders
 import {
   skyVertexShader,

@@ -288,6 +288,45 @@ export function createDebugUI(state) {
   });
   container.appendChild(resetButton);
 
+  // Add a save settings button
+  const saveButton = document.createElement("button");
+  saveButton.textContent = "Save Settings";
+  saveButton.style.width = "100%";
+  saveButton.style.padding = "8px";
+  saveButton.style.marginTop = "10px";
+  saveButton.style.backgroundColor = "#2a6";
+  saveButton.style.border = "none";
+  saveButton.style.borderRadius = "4px";
+  saveButton.style.color = "white";
+  saveButton.style.cursor = "pointer";
+  saveButton.addEventListener("click", () => {
+    // Collect all current settings
+    const settings = {};
+    for (const key in controls) {
+      if (controls[key].getValue) {
+        settings[key] = controls[key].getValue();
+      }
+    }
+    // Save to localStorage
+    localStorage.setItem("spincube-settings", JSON.stringify(settings));
+
+    // Show a confirmation message
+    const message = document.createElement("div");
+    message.textContent = "Settings saved!";
+    message.style.padding = "5px";
+    message.style.marginTop = "5px";
+    message.style.backgroundColor = "rgba(42, 102, 42, 0.7)";
+    message.style.borderRadius = "4px";
+    message.style.textAlign = "center";
+    container.appendChild(message);
+
+    // Remove the message after 2 seconds
+    setTimeout(() => {
+      container.removeChild(message);
+    }, 2000);
+  });
+  container.appendChild(saveButton);
+
   // Add a toggle button to show/hide the panel
   const toggleButton = document.createElement("button");
   toggleButton.textContent = "Hide Panel";
