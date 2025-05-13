@@ -84,7 +84,15 @@ export function updateBounceAnimation({
     const colorProgress = Math.sin(progress * Math.PI);
     const currentColor = new THREE.Color();
     currentColor.lerpColors(originalCubeColor, bounceCubeColor, colorProgress);
-    cube.material.color.copy(currentColor);
+
+    // Apply color to the cube (which is now a group)
+    // Find the actual cube mesh (first child of the group)
+    if (cube.children && cube.children.length > 0) {
+      const cubeMesh = cube.children[0]; // The first child is the actual cube mesh
+      if (cubeMesh && cubeMesh.material) {
+        cubeMesh.material.color.copy(currentColor);
+      }
+    }
 
     // Add a slight rotation effect during bounce
     cube.rotation.z = Math.sin(progress * Math.PI * 2) * 0.1;
@@ -118,7 +126,14 @@ export function updateBounceAnimation({
         currentScrollScale
       );
       cube.rotation.z = 0; // Reset z rotation
-      cube.material.color.copy(originalCubeColor); // Reset color
+
+      // Reset color on the cube mesh (first child of the group)
+      if (cube.children && cube.children.length > 0) {
+        const cubeMesh = cube.children[0]; // The first child is the actual cube mesh
+        if (cubeMesh && cubeMesh.material) {
+          cubeMesh.material.color.copy(originalCubeColor);
+        }
+      }
       skyShaderMaterial.uniforms.u_warpAmount.value = CONST.WARP_AMOUNT;
       skyShaderMaterial.uniforms.u_checkerScale.value =
         CONST.CHECKER_SCALE * backgroundZoomFactor;
