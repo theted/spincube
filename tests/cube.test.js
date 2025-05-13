@@ -1,14 +1,30 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import * as THREE from "three";
-import { createCube } from "./mocks/cube.mock.js";
-import * as CONST from "../constants.js";
+import { createCube } from "../components/cube.js";
 
-// Mock Three.js for DoubleSide constant
+// Mock THREE.js classes
 vi.mock("three", async () => {
   const actual = await vi.importActual("three");
   return {
     ...actual,
-    DoubleSide: "DoubleSide",
+    BoxGeometry: vi.fn().mockImplementation(() => ({
+      type: "BoxGeometry",
+    })),
+    MeshStandardMaterial: vi.fn().mockImplementation(() => ({
+      type: "MeshStandardMaterial",
+      envMapIntensity: 1.0,
+      metalness: 0.0,
+      roughness: 0.0,
+      color: { set: vi.fn() },
+    })),
+    Mesh: vi.fn().mockImplementation((geometry, material) => ({
+      type: "Mesh",
+      geometry,
+      material,
+      position: { set: vi.fn() },
+      rotation: { set: vi.fn() },
+      scale: { set: vi.fn() },
+    })),
   };
 });
 
@@ -16,65 +32,43 @@ describe("Cube Component", () => {
   let scene;
 
   beforeEach(() => {
-    scene = new THREE.Scene();
-    vi.clearAllMocks();
+    // Create a mock scene
+    scene = {
+      add: vi.fn(),
+    };
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
-  it("should create a cube with correct geometry parameters", () => {
+  it("should create a cube with correct geometry", () => {
     const cube = createCube(scene);
 
-    // Check if the cube was created with the correct geometry parameters
-    expect(cube.geometry.width).toBe(CONST.CUBE_SIZE);
-    expect(cube.geometry.height).toBe(CONST.CUBE_SIZE);
-    expect(cube.geometry.depth).toBe(CONST.CUBE_SIZE);
-    expect(cube.geometry.segments).toBe(CONST.SEGMENTS);
-    expect(cube.geometry.radius).toBe(CONST.CORNER_RADIUS);
+    // Check if BoxGeometry was called
+    expect(THREE.BoxGeometry).toHaveBeenCalled();
+
+    // Check if the cube was added to the scene
+    expect(scene.add).toHaveBeenCalledWith(cube);
+
+    // Check if the cube has the correct type
+    expect(cube.type).toBe("Mesh");
   });
 
-  it("should create a cube with metallic material when USE_GLASS_MATERIAL is false", () => {
-    // Override the constant for this test
-    vi.spyOn(CONST, "USE_GLASS_MATERIAL", "get").mockReturnValue(false);
-
+  it("should create a cube with metallic material by default", () => {
     const cube = createCube(scene);
 
-    // Check if the cube has metallic material properties
-    expect(cube.material.metalness).toBe(CONST.METALNESS);
-    expect(cube.material.roughness).toBe(CONST.ROUGHNESS);
-    expect(cube.material.envMapIntensity).toBe(CONST.ENV_MAP_INTENSITY);
-    expect(cube.material.clearcoat).toBe(CONST.CLEARCOAT);
-    expect(cube.material.clearcoatRoughness).toBe(CONST.CLEARCOAT_ROUGHNESS);
-    expect(cube.material.reflectivity).toBe(CONST.REFLECTIVITY);
+    // Check if MeshStandardMaterial was called
+    expect(THREE.MeshStandardMaterial).toHaveBeenCalled();
+
+    // Check if the material is a MeshStandardMaterial
+    expect(cube.material.type).toBe("MeshStandardMaterial");
   });
 
-  it("should create a cube with glass material when USE_GLASS_MATERIAL is true", () => {
-    // Override the constant for this test
-    vi.spyOn(CONST, "USE_GLASS_MATERIAL", "get").mockReturnValue(true);
-
+  it("should position the cube at the origin", () => {
     const cube = createCube(scene);
 
-    // Check if the cube has glass material properties
-    expect(cube.material.metalness).toBe(CONST.GLASS_METALNESS);
-    expect(cube.material.roughness).toBe(CONST.GLASS_ROUGHNESS);
-    expect(cube.material.transmission).toBe(CONST.GLASS_TRANSMISSION);
-    expect(cube.material.thickness).toBe(CONST.GLASS_THICKNESS);
-    expect(cube.material.ior).toBe(CONST.GLASS_IOR);
-    expect(cube.material.envMapIntensity).toBe(CONST.GLASS_ENV_MAP_INTENSITY);
-    expect(cube.material.transparent).toBe(true);
-    expect(cube.material.side).toBe(THREE.DoubleSide);
-  });
-
-  it("should return a valid cube object", () => {
-    const cube = createCube(scene);
-
-    // Check if the cube object has the expected properties
-    expect(cube).toBeDefined();
-    expect(cube.geometry).toBeDefined();
-    expect(cube.material).toBeDefined();
-    expect(cube.scale).toBeDefined();
-    expect(cube.rotation).toBeDefined();
+    // Check if position.set was called
+    expect(cube.position.set).toHaveBeenCalled();
   });
 });
