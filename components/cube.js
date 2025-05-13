@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import * as CONST from "../constants.js";
+import { createLetterTexture } from "../utils/textureGenerator.js";
 
 /**
  * Creates a cube with the appropriate material based on settings
@@ -39,6 +40,9 @@ export function createCube(scene) {
  * @returns {THREE.MeshPhysicalMaterial} The glass material
  */
 function createGlassMaterial() {
+  // Create the letter texture
+  const letterTexture = createLetterTexture();
+
   return new THREE.MeshPhysicalMaterial({
     color: CONST.GLASS_COLOR,
     metalness: CONST.GLASS_METALNESS,
@@ -49,6 +53,7 @@ function createGlassMaterial() {
     envMapIntensity: CONST.GLASS_ENV_MAP_INTENSITY,
     transparent: true, // Enable transparency
     side: THREE.DoubleSide, // Render both sides for glass effect
+    map: letterTexture, // Apply the letter texture
   });
 }
 
@@ -57,6 +62,9 @@ function createGlassMaterial() {
  * @returns {THREE.MeshPhysicalMaterial} The metallic material
  */
 function createMetallicMaterial() {
+  // Create the letter texture
+  const letterTexture = createLetterTexture();
+
   return new THREE.MeshPhysicalMaterial({
     color: CONST.MATERIAL_COLOR,
     metalness: CONST.METALNESS,
@@ -65,6 +73,7 @@ function createMetallicMaterial() {
     clearcoat: CONST.CLEARCOAT,
     clearcoatRoughness: CONST.CLEARCOAT_ROUGHNESS,
     reflectivity: CONST.REFLECTIVITY,
+    map: letterTexture, // Apply the letter texture
   });
 }
 
