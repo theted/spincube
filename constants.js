@@ -1,5 +1,6 @@
 // --- Debug mode ---
 export const DEBUG = true; // Toggle debug mode for controls panel
+export const USE_INTENSE_BACKGROUND = false; // Toggle between intense and mellow background
 
 // --- Cube constants ---
 export const CUBE_SIZE = 2.25; // Increased by 50% from 1.5
@@ -33,13 +34,13 @@ export const ENV_MAP_UPDATE_INTERVAL = 1 / 20; // Update env map at 20 FPS for b
 export const BACKGROUND_BLUR = 0.8; // Increased blur for better performance and aesthetics (0-1)
 
 // --- Cube interaction constants ---
-export const INITIAL_SPIN_SPEED = { x: 0.003, y: 0.004 }; // Increased spin speed further
-export const K_SPRING = 0.04; // Reduced springiness for less responsive feel
-export const K_DAMPING = 0.1; // Further reduced damping for much longer spin
-export const MOUSE_DRAG_SENSITIVITY = 0.005; // Reduced sensitivity when picking up
-export const TARGET_OFFSET_DAMPING_FACTOR = 0.98; // Increased to make cube spin much longer
-export const CUBE_INTERACTION_PARALLAX_FACTOR = 0.025; // Significantly increased parallax effect
-export const THROW_VELOCITY_FACTOR = 1.5; // Increased factor for stronger "throwing" effect
+export const INITIAL_SPIN_SPEED = { x: 0.001, y: 0.002 }; // Reduced spin speed
+export const K_SPRING = 0.08; // Increased springiness for more responsive feel
+export const K_DAMPING = 0.2; // Increased damping for less spin
+export const MOUSE_DRAG_SENSITIVITY = 0.002; // Significantly reduced sensitivity when picking up
+export const TARGET_OFFSET_DAMPING_FACTOR = 0.9; // Reduced to make cube spin less
+export const CUBE_INTERACTION_PARALLAX_FACTOR = 0.01; // Reduced parallax effect
+export const THROW_VELOCITY_FACTOR = 0.5; // Reduced factor for gentler "throwing" effect
 
 // --- Scroll constants ---
 export const SCROLL_SPRING = 0.1; // Spring constant for scroll physics

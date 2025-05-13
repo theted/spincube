@@ -1,6 +1,8 @@
 import { snoise } from "../snoise.glsl.js";
+import { USE_INTENSE_BACKGROUND } from "../constants.js";
 
 export const skyFragmentShader = `
+    uniform bool u_useIntenseBackground;
     uniform float u_time;
     uniform vec2 u_resolution; // Resolution of the render target
     uniform float u_checkerScale;
@@ -32,29 +34,46 @@ export const skyFragmentShader = `
 
     void main() {
         vec2 currentUv = vUv + u_uvOffset; // Apply parallax offset
+        vec3 finalColor;
 
-        // Warp the UV coordinates using simplex noise
-        vec2 warpedUv = currentUv;
-        float noiseVal = snoise(vec3(currentUv * u_warpFrequency, u_time * u_warpSpeed));
-        warpedUv.x += noiseVal * u_warpAmount;
-        
-        float noiseValY = snoise(vec3(currentUv.yx * u_warpFrequency * 1.2 + 5.0, u_time * u_warpSpeed * 0.8));
-        warpedUv.y += noiseValY * u_warpAmount * 0.7;
+        if (u_useIntenseBackground) {
+            // Intense background with warping and checkerboard pattern
+            // Warp the UV coordinates using simplex noise
+            vec2 warpedUv = currentUv;
+            float noiseVal = snoise(vec3(currentUv * u_warpFrequency, u_time * u_warpSpeed));
+            warpedUv.x += noiseVal * u_warpAmount;
+            
+            float noiseValY = snoise(vec3(currentUv.yx * u_warpFrequency * 1.2 + 5.0, u_time * u_warpSpeed * 0.8));
+            warpedUv.y += noiseValY * u_warpAmount * 0.7;
 
+            // Calculate checkerboard pattern on warped UVs
+            float pattern = checker(warpedUv, u_checkerScale);
 
-        // Calculate checkerboard pattern on warped UVs
-        float pattern = checker(warpedUv, u_checkerScale);
-
-        vec3 color1 = vec3(0.08, 0.08, 0.18); // Darker part with increased contrast
-        vec3 color2 = vec3(0.35, 0.35, 0.55); // Lighter part with increased contrast
-        
-        vec3 finalColor = mix(color1, color2, pattern);
-        
-        // Add a subtle glow or atmospheric effect based on view direction
-        vec3 viewDir = equirectToDirection(vUv); // original vUv for direction
-        float horizonFactor = smoothstep(0.0, 0.3, abs(viewDir.y)); // Stronger effect near horizon
-        finalColor = mix(finalColor, vec3(0.4, 0.4, 0.6) * 0.8, horizonFactor * 0.4);
-
+            vec3 color1 = vec3(0.08, 0.08, 0.18); // Darker part with increased contrast
+            vec3 color2 = vec3(0.35, 0.35, 0.55); // Lighter part with increased contrast
+            
+            finalColor = mix(color1, color2, pattern);
+            
+            // Add a subtle glow or atmospheric effect based on view direction
+            vec3 viewDir = equirectToDirection(vUv); // original vUv for direction
+            float horizonFactor = smoothstep(0.0, 0.3, abs(viewDir.y)); // Stronger effect near horizon
+            finalColor = mix(finalColor, vec3(0.4, 0.4, 0.6) * 0.8, horizonFactor * 0.4);
+        } else {
+            // Mellow dark gradient background
+            // Create a simple gradient from top to bottom
+            vec3 topColor = vec3(0.1, 0.12, 0.18); // Dark blue at top
+            vec3 bottomColor = vec3(0.05, 0.05, 0.1); // Darker blue at bottom
+            
+            // Subtle noise for texture
+            float noise = snoise(vec3(currentUv * 3.0, u_time * 0.05)) * 0.03;
+            
+            // Mix colors based on Y coordinate
+            finalColor = mix(bottomColor, topColor, currentUv.y + noise);
+            
+            // Add a very subtle vignette effect
+            float vignette = 1.0 - smoothstep(0.5, 1.5, length(currentUv - vec2(0.5)));
+            finalColor *= vignette * 0.9 + 0.1;
+        }
 
         gl_FragColor = vec4(finalColor, 1.0);
     }

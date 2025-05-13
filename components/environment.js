@@ -40,6 +40,7 @@ export function createEnvironment(scene, renderer) {
       u_warpFrequency: { value: CONST.WARP_FREQUENCY },
       u_warpSpeed: { value: CONST.WARP_SPEED },
       u_uvOffset: { value: new THREE.Vector2(0, 0) }, // For parallax
+      u_useIntenseBackground: { value: CONST.USE_INTENSE_BACKGROUND }, // Toggle between intense and mellow background
     },
     vertexShader: `void main() { gl_Position = vec4(position, 1.0); }`, // Default placeholder
     fragmentShader: `void main() { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); }`, // Default placeholder

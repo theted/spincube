@@ -202,6 +202,17 @@ export function createDebugUI(state) {
   );
 
   // Shader controls
+  controls.useIntenseBackground = createToggle(
+    "Background Style",
+    CONST.USE_INTENSE_BACKGROUND,
+    (value) => {
+      state.skyShaderMaterial.uniforms.u_useIntenseBackground.value = value;
+      state.updateEnvironmentMap();
+    },
+    ["Mellow", "Intense"],
+    sections.shader
+  );
+
   controls.warpAmount = createSlider(
     "Warp Amount",
     CONST.WARP_AMOUNT,
