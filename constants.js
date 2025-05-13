@@ -1,6 +1,6 @@
 // --- Debug mode ---
 export const DEBUG = process.env.DEBUG !== false; // Toggle debug mode for controls panel
-export const USE_INTENSE_BACKGROUND = true; // Toggle between intense and mellow background (enabled for darker look)
+export const USE_INTENSE_BACKGROUND = false; // Using calm background with darker colors
 
 // --- Cube constants ---
 export const CUBE_SIZE = 2.25; // Increased by 50% from 1.5
