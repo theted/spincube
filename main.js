@@ -171,9 +171,81 @@ function updateEnvironmentMap() {
   if (processedEnvMap) {
     processedEnvMap.dispose();
   }
+
+  // Apply blur to the environment map for better performance and aesthetics
+  // Create a temporary render target for the blur pass
+  const blurredRenderTarget = new THREE.WebGLRenderTarget(
+    CONST.ENV_MAP_SIZE,
+    CONST.ENV_MAP_SIZE / 2,
+    {
+      format: THREE.RGBAFormat,
+      type: THREE.FloatType,
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      generateMipmaps: false,
+    }
+  );
+
+  // Create a simple blur shader material
+  const blurMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      tDiffuse: { value: envMapRenderTarget.texture },
+      resolution: {
+        value: new THREE.Vector2(CONST.ENV_MAP_SIZE, CONST.ENV_MAP_SIZE / 2),
+      },
+      blurSize: { value: CONST.BACKGROUND_BLUR * 0.01 },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D tDiffuse;
+      uniform vec2 resolution;
+      uniform float blurSize;
+      varying vec2 vUv;
+      
+      void main() {
+        vec4 sum = vec4(0.0);
+        vec2 texelSize = vec2(blurSize, blurSize);
+        
+        // 9-tap Gaussian blur
+        sum += texture2D(tDiffuse, vUv + vec2(-texelSize.x, -texelSize.y)) * 0.0625;
+        sum += texture2D(tDiffuse, vUv + vec2(0.0, -texelSize.y)) * 0.125;
+        sum += texture2D(tDiffuse, vUv + vec2(texelSize.x, -texelSize.y)) * 0.0625;
+        
+        sum += texture2D(tDiffuse, vUv + vec2(-texelSize.x, 0.0)) * 0.125;
+        sum += texture2D(tDiffuse, vUv) * 0.25;
+        sum += texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)) * 0.125;
+        
+        sum += texture2D(tDiffuse, vUv + vec2(-texelSize.x, texelSize.y)) * 0.0625;
+        sum += texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)) * 0.125;
+        sum += texture2D(tDiffuse, vUv + vec2(texelSize.x, texelSize.y)) * 0.0625;
+        
+        gl_FragColor = sum;
+      }
+    `,
+  });
+
+  // Render the blur pass
+  const blurQuad = new FullScreenQuad(blurMaterial);
+  renderer.setRenderTarget(blurredRenderTarget);
+  blurQuad.render(renderer);
+  renderer.setRenderTarget(null);
+
+  // Clean up the blur quad
+  blurQuad.dispose();
+
+  // Process the blurred texture with PMREMGenerator
   processedEnvMap = pmremGenerator.fromEquirectangular(
-    envMapRenderTarget.texture
+    blurredRenderTarget.texture
   ).texture;
+
+  // Clean up the temporary render target
+  blurredRenderTarget.dispose();
 
   // 3. Apply to scene
   scene.background = processedEnvMap; // Use processed for background too for consistency

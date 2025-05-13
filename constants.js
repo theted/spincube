@@ -13,13 +13,14 @@ export const CLEARCOAT_ROUGHNESS = 0.01; // Make clearcoat very smooth
 export const REFLECTIVITY = 1.0; // Maximum reflectivity
 
 // --- Environment map constants ---
-export const ENV_MAP_SIZE = 1024; // Quality of the generated environment map (power of 2)
-export const ENV_MAP_UPDATE_INTERVAL = 1 / 30; // Update env map at 30 FPS, or less if not much changes
+export const ENV_MAP_SIZE = 512; // Reduced quality for better performance (power of 2)
+export const ENV_MAP_UPDATE_INTERVAL = 1 / 20; // Update env map at 20 FPS for better performance
+export const BACKGROUND_BLUR = 0.5; // Amount of blur to apply to the background (0-1)
 
 // --- Cube interaction constants ---
-export const INITIAL_SPIN_SPEED = { x: 0.001, y: 0.0015 };
-export const K_SPRING = 0.035;
-export const K_DAMPING = 0.3;
+export const INITIAL_SPIN_SPEED = { x: 0.002, y: 0.003 }; // Doubled spin speed
+export const K_SPRING = 0.05; // Increased springiness
+export const K_DAMPING = 0.25; // Reduced damping for more bounce
 export const MOUSE_DRAG_SENSITIVITY = 0.008;
 export const TARGET_OFFSET_DAMPING_FACTOR = 0.92;
 export const CUBE_INTERACTION_PARALLAX_FACTOR = 0.01; // How much cube interaction shifts the shader's UVs
