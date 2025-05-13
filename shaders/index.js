@@ -1,9 +1,24 @@
-// Export all shaders from a single file for easier imports
+/**
+ * Shader exports
+ * This file exports all shader code for easier imports
+ */
 
-// Sky shaders
-export { skyVertexShader, skyVertexShaderFSQ } from "./skyVertexShader.js";
-export { skyFragmentShader } from "./skyFragmentShader.js";
+// Import shaders
+import { skyVertexShader } from "./skyVertexShader.js";
+import { skyVertexShaderFSQ } from "./skyVertexShaderFSQ.js";
+import { skyFragmentShader } from "./skyFragmentShader.js";
+import { blurVertexShader } from "./blurVertexShader.js";
+import { blurFragmentShader } from "./blurFragmentShader.js";
+import { cubeVertexShader } from "./cubeVertexShader.js";
+import { cubeFragmentShader } from "./cubeFragmentShader.js";
 
-// Blur shaders
-export { blurVertexShader } from "./blurVertexShader.js";
-export { blurFragmentShader } from "./blurFragmentShader.js";
+// Export all shaders
+export {
+  skyVertexShader,
+  skyVertexShaderFSQ,
+  skyFragmentShader,
+  blurVertexShader,
+  blurFragmentShader,
+  cubeVertexShader,
+  cubeFragmentShader,
+};
