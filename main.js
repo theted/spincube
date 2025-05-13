@@ -30,6 +30,17 @@ const kDamping = 0.3;
 const mouseDragSensitivity = 0.008;
 const targetOffsetDampingFactor = 0.92;
 
+// --- Bounce animation parameters ---
+let isBouncing = false;
+let bounceStartTime = 0;
+const bounceDuration = 0.7; // Animation duration in seconds
+const bounceMaxScale = 1.3; // Increased maximum scale during bounce
+const bounceMinScale = 0.8; // Decreased minimum scale during bounce
+let cubeBaseScale = 1.0; // Base scale of the cube
+let skyboxBounceAmount = 0.0; // Current skybox bounce amount
+let originalCubeColor = new THREE.Color(0xffffff); // Store original cube color
+let bounceCubeColor = new THREE.Color(0x88ccff); // Color during bounce (light blue)
+
 // --- Parallax for the SHADER generated background (optional, can be subtle) ---
 // This will affect the u_uvOffset uniform in the sky shader
 const cubeInteractionParallaxFactor = 0.01; // How much cube interaction shifts the shader's UVs
@@ -249,10 +260,31 @@ function onWindowResize() {
   // If env map size is dependent on screen, update it here (but fixed size is common)
 }
 
+// Raycaster for cube click detection
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
 function onPointerDown(event) {
   isDragging = true;
   previousMousePosition.x = event.clientX;
   previousMousePosition.y = event.clientY;
+
+  // Check if cube was clicked
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(pointer, camera);
+  const intersects = raycaster.intersectObject(cube);
+
+  if (intersects.length > 0 && !isBouncing) {
+    // Cube was clicked, trigger bounce animation
+    triggerBounceAnimation();
+  }
+}
+
+function triggerBounceAnimation() {
+  isBouncing = true;
+  bounceStartTime = clock.getElapsedTime();
 }
 
 function onPointerMove(event) {
@@ -319,10 +351,73 @@ function animate() {
     lastEnvMapUpdateTime = elapsedTime;
   }
 
+  // Handle bounce animation
+  if (isBouncing) {
+    const bounceTime = elapsedTime - bounceStartTime;
+    if (bounceTime < bounceDuration) {
+      // Calculate bounce progress (0 to 1)
+      const progress = bounceTime / bounceDuration;
+
+      // Use a sine wave for smooth bounce effect
+      // First expand, then contract
+      const bounceScale =
+        progress < 0.5
+          ? THREE.MathUtils.lerp(
+              1.0,
+              bounceMaxScale,
+              Math.sin(progress * Math.PI)
+            )
+          : THREE.MathUtils.lerp(
+              bounceMinScale,
+              1.0,
+              Math.sin((progress - 0.5) * Math.PI)
+            );
+
+      // Apply scale to cube
+      cube.scale.set(bounceScale, bounceScale, bounceScale);
+
+      // Apply color change to cube during bounce
+      const colorProgress = Math.sin(progress * Math.PI);
+      const currentColor = new THREE.Color();
+      currentColor.lerpColors(
+        originalCubeColor,
+        bounceCubeColor,
+        colorProgress
+      );
+      cube.material.color.copy(currentColor);
+
+      // Add a slight rotation effect during bounce
+      cube.rotation.z = Math.sin(progress * Math.PI * 2) * 0.1;
+
+      // Calculate skybox bounce effect (inverse of cube scale for contrast)
+      skyboxBounceAmount = (bounceScale - 1.0) * 0.3; // Increased effect
+
+      // Apply skybox bounce effect to shader
+      skyShaderMaterial.uniforms.u_warpAmount.value = 0.05 + skyboxBounceAmount;
+      skyShaderMaterial.uniforms.u_checkerScale.value =
+        20.0 * (1.0 - skyboxBounceAmount * 2);
+      skyShaderMaterial.uniforms.u_warpSpeed.value =
+        0.1 + Math.abs(skyboxBounceAmount) * 2; // Speed up animation during bounce
+
+      // Force environment map update during bounce
+      updateEnvironmentMap();
+    } else {
+      // Animation complete, reset everything
+      isBouncing = false;
+      cube.scale.set(1, 1, 1);
+      cube.rotation.z = 0; // Reset z rotation
+      cube.material.color.copy(originalCubeColor); // Reset color
+      skyShaderMaterial.uniforms.u_warpAmount.value = 0.05;
+      skyShaderMaterial.uniforms.u_checkerScale.value = 20.0;
+      skyShaderMaterial.uniforms.u_warpSpeed.value = 0.1; // Reset warp speed
+    }
+  }
+
   // Clamp small interactive motions
   const motionEpsilon = 0.00001;
   if (
     !isDragging &&
+    !isBouncing &&
     Math.abs(targetUserSpinOffset.x) < motionEpsilon &&
     Math.abs(targetUserSpinOffset.y) < motionEpsilon &&
     Math.abs(currentUserSpinOffset.x) < motionEpsilon &&
