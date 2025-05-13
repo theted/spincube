@@ -5,7 +5,7 @@ An interactive 3D visualization featuring a spinning cube with dynamic effects, 
 ## Features
 
 - Interactive 3D cube with physics-based interactions
-- Metallic and glass material options
+- Metallic and glass material options with bold "S" letter texture
 - Dynamic environment mapping
 - Customizable shader effects
 - Debug panel for adjusting parameters in development mode
