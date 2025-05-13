@@ -4,82 +4,117 @@ An interactive 3D visualization featuring a spinning cube with dynamic effects, 
 
 ## Features
 
-- Interactive 3D cube with physics-based animations
-- Spring-based rotation system with "throw" physics
-- Dynamic environment mapping with shader-based background
-- Responsive zoom and bounce animations
-- Glass and metallic material options
-- Modular, maintainable code structure
+- Interactive 3D cube with physics-based interactions
+- Metallic and glass material options
+- Dynamic environment mapping
+- Customizable shader effects
+- Debug panel for adjusting parameters in development mode
+- Save and load settings for production builds
+- Minified single-file build output
 
-## Technical Details
+## Development
 
-### Physics System
+### Installation
 
-The cube uses a spring-based physics system that allows it to:
+```bash
+npm install
+```
 
-- Continue spinning when "thrown" with momentum
-- Bounce and scale when clicked
-- Respond to scroll wheel for zooming
-- Maintain expanded state when mouse is held down
+### Running the Development Server
 
-### Visual Effects
+```bash
+npm run dev
+```
 
-- Dynamic shader-based background that responds to cube movement
-- Environment mapping for realistic reflections
-- Parallax effect that enhances the sense of depth
-- Smooth animations with spring physics
+This will start a development server with hot reloading.
 
-### Code Organization
+### Debug Controls
 
-The project follows a modular structure:
+In development mode, a debug panel is available to adjust various parameters:
 
-- `main.js` - Core application logic and state management
-- `constants.js` - All configurable parameters
-- `utils/` - Utility functions
-  - `physics.js` - Physics calculations
-  - `animation.js` - Animation helpers
-  - `events.js` - Event handling
-- `components/` - Reusable components
-  - `cube.js` - Cube creation and handling
-  - `environment.js` - Environment setup
-- `shaders/` - All shader code
-  - `skyVertexShader.js`
-  - `skyFragmentShader.js`
-  - `blurVertexShader.js`
-  - `blurFragmentShader.js`
+- Material properties (metallic/glass, roughness, etc.)
+- Cube properties (size, spin speed)
+- Animation settings (bounce duration, spring constants)
+- Shader effects (warp amount, checker scale)
 
-## Usage
+### Saving Settings
 
-1. Start a local server:
+1. Adjust the parameters in the debug panel
+2. Click the "Save Settings" button to save to localStorage
+3. Run `npm run export-settings` to open a page for downloading the settings file
+4. Download the settings file and place it in the project root directory
 
-   ```
-   python -m http.server 8080
-   ```
+### Building for Production
 
-2. Open in a browser:
+#### Standard Build
 
-   ```
-   http://localhost:8080
-   ```
+```bash
+npm run build
+```
 
-3. Interact with the cube:
-   - Click and drag to rotate
-   - Click to trigger bounce animation
-   - Scroll to zoom in/out
-   - Hold mouse down to keep the cube in expanded state
+#### Production Build with Debug Mode Disabled
 
-## Customization
+```bash
+npm run build:prod
+```
 
-Most parameters can be adjusted in `constants.js`:
+#### Production Build with Saved Settings
 
-- Cube size, corner radius, and segments
-- Material properties (metalness, roughness, etc.)
-- Spring constants for physics
-- Animation durations and scales
-- Shader parameters
+```bash
+npm run build:saved
+```
 
-Toggle between glass and metallic materials by changing `USE_GLASS_MATERIAL` in `constants.js`.
+This will use the settings from `saved-settings.json` and disable debug mode.
 
-## Development Guidelines
+## Testing
 
-See [AI_RULES.md](./AI_RULES.md) for development guidelines and best practices.
+```bash
+npm run test
+```
+
+## Docker Support
+
+The project includes Docker support for easy deployment.
+
+### Building the Docker Image
+
+```bash
+docker build -t spincube .
+```
+
+### Running the Docker Container
+
+```bash
+docker run -p 8080:80 spincube
+```
+
+This will start the application on http://localhost:8080
+
+### How the Dockerfile Works
+
+The Dockerfile uses a multi-stage build process:
+
+1. **Build Stage**:
+
+   - Uses Node.js Alpine image for a small footprint
+   - Installs dependencies with `npm ci` for reproducible builds
+   - Builds the application with `npm run build`
+
+2. **Production Stage**:
+   - Uses Nginx Alpine for a lightweight web server
+   - Copies only the built assets from the build stage
+   - Configures Nginx to serve the static files
+   - Exposes port 80 for HTTP traffic
+
+This approach results in a small, efficient Docker image that contains only what's needed to run the application in production.
+
+## Project Structure
+
+- `/components` - Reusable components (cube, environment, debug UI)
+- `/shaders` - GLSL shader code
+- `/utils` - Utility functions (physics, animation, events)
+- `/tests` - Test files
+
+## License
+
+ISC
