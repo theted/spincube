@@ -9,9 +9,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:prod": "cross-env NODE_ENV=production node build-constants.js && vite build",
+    "build:saved": "node save-settings.js && cross-env NODE_ENV=production vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "export-settings": "vite export-settings.html --open"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +22,7 @@
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",
     "@types/three": "^0.176.0",
+    "cross-env": "^7.0.3",
     "jsdom": "^26.1.0",
     "terser": "^5.39.1",
     "vite": "^6.3.5",

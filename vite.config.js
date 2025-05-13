@@ -1,7 +1,14 @@
 import { defineConfig } from "vite";
 import { resolve } from "path";
 
+// Define environment variables for build
+const isProd = process.env.NODE_ENV === "production";
+
 export default defineConfig({
+  define: {
+    // Replace DEBUG constant with false in production builds
+    "process.env.DEBUG": isProd ? false : true,
+  },
   build: {
     outDir: "dist",
     emptyOutDir: true,
