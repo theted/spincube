@@ -1,131 +1,129 @@
 /**
- * Utility for creating 3D letter geometries
+ * Utility for creating 3D-looking letter textures and geometries
  */
 
 import * as THREE from "three";
-import { FontLoader } from "three/addons/loaders/FontLoader.js";
-import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
-
-// Cache for loaded fonts
-const fontCache = {};
 
 /**
- * Creates a 3D letter "S" with deep beveling
+ * Creates a 3D letter "S" with deep beveling effect using advanced texturing
  * @param {Function} callback - Callback function that receives the created mesh
  */
 export function create3DLetter(callback) {
-  // Load the font
-  const loader = new FontLoader();
-
-  // Use cached font if available
-  if (fontCache.boldFont) {
-    createLetterGeometry(fontCache.boldFont, callback);
-    return;
-  }
-
-  // Load the font from local file
-  loader.load(
-    "/fonts/helvetiker_bold.typeface.json",
-    function (font) {
-      // Cache the font for future use
-      fontCache.boldFont = font;
-      createLetterGeometry(font, callback);
-    },
-    // onProgress callback
-    function (xhr) {
-      console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
-    },
-    // onError callback
-    function (err) {
-      console.error("An error happened while loading the font:", err);
-      // Fallback to creating a cube with the letter "S" as a texture
-      createFallbackLetter(callback);
-    }
-  );
+  // Create a box geometry for each face
+  createBeveledLetterMesh(callback);
 }
 
 /**
- * Creates a fallback letter mesh using a simple box geometry with texture
+ * Creates a mesh with a deeply beveled "S" letter texture
  * @param {Function} callback - Callback function that receives the created mesh
  */
-function createFallbackLetter(callback) {
-  console.log("Using fallback letter mesh");
+function createBeveledLetterMesh(callback) {
+  // Create a box geometry with some depth for the letter
+  const geometry = new THREE.BoxGeometry(0.8, 1, 0.2);
 
-  // Create a simple box geometry
-  const geometry = new THREE.BoxGeometry(0.8, 1, 0.1);
-
-  // Create canvas for texture
+  // Create canvas for texture with 3D beveled effect
   const canvas = document.createElement("canvas");
-  canvas.width = 256;
-  canvas.height = 256;
+  canvas.width = 512;
+  canvas.height = 512;
   const context = canvas.getContext("2d");
 
-  // Fill background
-  context.fillStyle = "#000000";
+  // Fill background with transparent color
+  context.fillStyle = "rgba(0, 0, 0, 0)";
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Draw letter
-  context.fillStyle = "#ffffff";
-  context.font = "bold 200px Arial";
+  // Create a 3D beveled effect for the "S"
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+
+  // Draw the base shape (shadow/depth)
+  context.shadowColor = "rgba(0, 0, 0, 0.9)";
+  context.shadowBlur = 30;
+  context.shadowOffsetX = 15;
+  context.shadowOffsetY = 15;
+  context.fillStyle = "rgba(30, 30, 30, 1.0)";
+  context.font = "bold 320px Arial Black, Impact";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText("S", canvas.width / 2, canvas.height / 2);
+  context.fillText("S", centerX, centerY);
 
-  // Create texture
+  // Draw the middle layer
+  context.shadowColor = "rgba(100, 100, 100, 0.8)";
+  context.shadowBlur = 20;
+  context.shadowOffsetX = 8;
+  context.shadowOffsetY = 8;
+  context.fillStyle = "rgba(120, 120, 120, 1.0)";
+  context.fillText("S", centerX - 4, centerY - 4);
+
+  // Draw the top highlight
+  context.shadowColor = "rgba(255, 255, 255, 0.8)";
+  context.shadowBlur = 15;
+  context.shadowOffsetX = -5;
+  context.shadowOffsetY = -5;
+  context.fillStyle = "rgba(220, 220, 220, 1.0)";
+  context.fillText("S", centerX - 8, centerY - 8);
+
+  // Add edge highlights
+  context.shadowColor = "rgba(255, 255, 255, 0.9)";
+  context.shadowBlur = 5;
+  context.shadowOffsetX = -2;
+  context.shadowOffsetY = -2;
+  context.strokeStyle = "rgba(255, 255, 255, 0.8)";
+  context.lineWidth = 3;
+  context.strokeText("S", centerX - 8, centerY - 8);
+
+  // Reset shadow
+  context.shadowColor = "transparent";
+  context.shadowBlur = 0;
+  context.shadowOffsetX = 0;
+  context.shadowOffsetY = 0;
+
+  // Create normal map for additional 3D effect
+  const normalCanvas = document.createElement("canvas");
+  normalCanvas.width = 512;
+  normalCanvas.height = 512;
+  const normalContext = normalCanvas.getContext("2d");
+
+  // Fill with neutral normal color (128, 128, 255)
+  normalContext.fillStyle = "rgb(128, 128, 255)";
+  normalContext.fillRect(0, 0, normalCanvas.width, normalCanvas.height);
+
+  // Draw the letter shape with normal map colors
+  normalContext.font = "bold 320px Arial Black, Impact";
+  normalContext.textAlign = "center";
+  normalContext.textBaseline = "middle";
+
+  // Top-left to bottom-right gradient for normal map
+  const gradient = normalContext.createLinearGradient(
+    centerX - 150,
+    centerY - 150,
+    centerX + 150,
+    centerY + 150
+  );
+  gradient.addColorStop(0, "rgb(200, 200, 255)"); // Top-left highlight
+  gradient.addColorStop(0.5, "rgb(128, 128, 255)"); // Neutral
+  gradient.addColorStop(1, "rgb(50, 50, 200)"); // Bottom-right shadow
+
+  normalContext.fillStyle = gradient;
+  normalContext.fillText("S", centerX, centerY);
+
+  // Create textures
   const texture = new THREE.CanvasTexture(canvas);
+  const normalMap = new THREE.CanvasTexture(normalCanvas);
 
-  // Create material
+  // Create material with normal mapping for enhanced 3D effect
   const material = new THREE.MeshStandardMaterial({
     map: texture,
+    normalMap: normalMap,
+    normalScale: new THREE.Vector2(1, 1),
     metalness: 0.9,
     roughness: 0.05,
+    envMapIntensity: 2.0,
+    transparent: true,
+    side: THREE.DoubleSide,
   });
 
   // Create mesh
   const letterMesh = new THREE.Mesh(geometry, material);
-
-  // Call the callback with the created mesh
-  callback(letterMesh);
-}
-
-/**
- * Creates the letter geometry with the loaded font
- * @param {Font} font - The loaded font
- * @param {Function} callback - Callback function that receives the created mesh
- */
-function createLetterGeometry(font, callback) {
-  // Create text geometry with extra deep beveling
-  const textGeometry = new TextGeometry("S", {
-    font: font,
-    size: 1.3, // Larger size for bolder appearance
-    height: 0.5, // Increased depth of the letter
-    curveSegments: 16, // More segments for smoother curves
-    bevelEnabled: true,
-    bevelThickness: 0.25, // Increased depth of the bevel
-    bevelSize: 0.4, // Increased bevel size for more pronounced effect
-    bevelOffset: 0,
-    bevelSegments: 10, // More bevel segments for smoother bevels
-  });
-
-  // Center the geometry
-  textGeometry.computeBoundingBox();
-  const centerOffset = new THREE.Vector3();
-  centerOffset.x =
-    -(textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x) / 2;
-  centerOffset.y =
-    -(textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y) / 2;
-  textGeometry.translate(centerOffset.x, centerOffset.y, 0);
-
-  // Create material for the letter
-  const material = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    metalness: 0.9,
-    roughness: 0.05,
-    envMapIntensity: 1.0,
-  });
-
-  // Create mesh
-  const letterMesh = new THREE.Mesh(textGeometry, material);
 
   // Call the callback with the created mesh
   callback(letterMesh);
