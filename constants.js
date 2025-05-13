@@ -4,6 +4,9 @@ export const CORNER_RADIUS = 0.05; // Reduced corner radius for less rounded edg
 export const SEGMENTS = 12; // Increased segments for smoother edges
 
 // --- Material constants ---
+export const USE_GLASS_MATERIAL = true; // Toggle between glass (true) and metallic (false)
+
+// Metallic material properties
 export const MATERIAL_COLOR = 0xffffff; // White color to maximize reflectivity
 export const METALNESS = 1.0;
 export const ROUGHNESS = 0.01; // Even shinier than before
@@ -12,25 +15,35 @@ export const CLEARCOAT = 1.0; // Add clearcoat for extra shine
 export const CLEARCOAT_ROUGHNESS = 0.01; // Make clearcoat very smooth
 export const REFLECTIVITY = 1.0; // Maximum reflectivity
 
+// Glass material properties
+export const GLASS_COLOR = 0xffffff; // Base color for glass
+export const GLASS_METALNESS = 0.0; // Non-metallic for glass
+export const GLASS_ROUGHNESS = 0.05; // Slightly rough for subtle diffusion
+export const GLASS_TRANSMISSION = 0.95; // High transmission for transparency
+export const GLASS_THICKNESS = 0.5; // Medium thickness
+export const GLASS_IOR = 1.5; // Index of refraction (1.5 is typical for glass)
+export const GLASS_ENV_MAP_INTENSITY = 1.0; // Environment map intensity for glass
+
 // --- Environment map constants ---
 export const ENV_MAP_SIZE = 512; // Reduced quality for better performance (power of 2)
 export const ENV_MAP_UPDATE_INTERVAL = 1 / 20; // Update env map at 20 FPS for better performance
-export const BACKGROUND_BLUR = 0.5; // Amount of blur to apply to the background (0-1)
+export const BACKGROUND_BLUR = 0.8; // Increased blur for better performance and aesthetics (0-1)
 
 // --- Cube interaction constants ---
-export const INITIAL_SPIN_SPEED = { x: 0.002, y: 0.003 }; // Doubled spin speed
-export const K_SPRING = 0.05; // Increased springiness
-export const K_DAMPING = 0.25; // Reduced damping for more bounce
-export const MOUSE_DRAG_SENSITIVITY = 0.008;
-export const TARGET_OFFSET_DAMPING_FACTOR = 0.92;
-export const CUBE_INTERACTION_PARALLAX_FACTOR = 0.01; // How much cube interaction shifts the shader's UVs
+export const INITIAL_SPIN_SPEED = { x: 0.003, y: 0.004 }; // Increased spin speed further
+export const K_SPRING = 0.04; // Reduced springiness for less responsive feel
+export const K_DAMPING = 0.1; // Further reduced damping for much longer spin
+export const MOUSE_DRAG_SENSITIVITY = 0.005; // Reduced sensitivity when picking up
+export const TARGET_OFFSET_DAMPING_FACTOR = 0.98; // Increased to make cube spin much longer
+export const CUBE_INTERACTION_PARALLAX_FACTOR = 0.025; // Significantly increased parallax effect
+export const THROW_VELOCITY_FACTOR = 1.5; // Increased factor for stronger "throwing" effect
 
 // --- Bounce animation constants ---
-export const BOUNCE_DURATION = 0.7; // Animation duration in seconds
-export const BOUNCE_MAX_SCALE = 1.3; // Increased maximum scale during bounce
-export const BOUNCE_MIN_SCALE = 0.8; // Decreased minimum scale during bounce
+export const BOUNCE_DURATION = 0.6; // Slightly longer animation duration
+export const BOUNCE_MAX_SCALE = 1.4; // Increased maximum scale during bounce
+export const BOUNCE_MIN_SCALE = 0.75; // Decreased minimum scale during bounce
 export const ORIGINAL_CUBE_COLOR = 0xffffff; // Store original cube color
-export const BOUNCE_CUBE_COLOR = 0x88ccff; // Color during bounce (light blue)
+export const BOUNCE_CUBE_COLOR = 0xffffff; // Keep the cube white during bounce (removed blue color)
 
 // --- Shader constants ---
 export const CHECKER_SCALE = 20.0; // How many checkers across

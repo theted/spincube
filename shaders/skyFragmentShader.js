@@ -45,8 +45,8 @@ export const skyFragmentShader = `
         // Calculate checkerboard pattern on warped UVs
         float pattern = checker(warpedUv, u_checkerScale);
 
-        vec3 color1 = vec3(0.1, 0.1, 0.2); // Brighter darker part
-        vec3 color2 = vec3(0.3, 0.3, 0.5); // Brighter lighter part
+        vec3 color1 = vec3(0.08, 0.08, 0.18); // Darker part with increased contrast
+        vec3 color2 = vec3(0.35, 0.35, 0.55); // Lighter part with increased contrast
         
         vec3 finalColor = mix(color1, color2, pattern);
         
