@@ -28,7 +28,7 @@ export function createEnvironment(scene, renderer) {
   // The texture from this render target will be equirectangular
   envMapRenderTarget.texture.mapping = THREE.EquirectangularReflectionMapping;
 
-  // Create Sky Shader Material
+  // Create Sky Shader Material with default shaders (will be replaced later)
   const skyShaderMaterial = new THREE.ShaderMaterial({
     uniforms: {
       u_time: { value: 0.0 },
@@ -41,8 +41,8 @@ export function createEnvironment(scene, renderer) {
       u_warpSpeed: { value: CONST.WARP_SPEED },
       u_uvOffset: { value: new THREE.Vector2(0, 0) }, // For parallax
     },
-    vertexShader: null, // Will be set by the caller
-    fragmentShader: null, // Will be set by the caller
+    vertexShader: `void main() { gl_Position = vec4(position, 1.0); }`, // Default placeholder
+    fragmentShader: `void main() { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); }`, // Default placeholder
   });
 
   // Helper to render the shader to the full target
@@ -87,7 +87,7 @@ export function createEnvironment(scene, renderer) {
         }
       );
 
-      // Create a blur shader material
+      // Create a blur shader material with default shaders
       const blurMaterial = new THREE.ShaderMaterial({
         uniforms: {
           tDiffuse: { value: envMapRenderTarget.texture },
@@ -99,8 +99,37 @@ export function createEnvironment(scene, renderer) {
           },
           blurSize: { value: CONST.BACKGROUND_BLUR * 0.01 },
         },
-        vertexShader: null, // Will be set by the caller
-        fragmentShader: null, // Will be set by the caller
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform sampler2D tDiffuse;
+          uniform vec2 resolution;
+          uniform float blurSize;
+          varying vec2 vUv;
+          
+          void main() {
+            vec4 sum = vec4(0.0);
+            float blur = blurSize / resolution.x;
+            
+            // Simple box blur
+            sum += texture2D(tDiffuse, vec2(vUv.x - 4.0*blur, vUv.y)) * 0.05;
+            sum += texture2D(tDiffuse, vec2(vUv.x - 3.0*blur, vUv.y)) * 0.09;
+            sum += texture2D(tDiffuse, vec2(vUv.x - 2.0*blur, vUv.y)) * 0.12;
+            sum += texture2D(tDiffuse, vec2(vUv.x - 1.0*blur, vUv.y)) * 0.15;
+            sum += texture2D(tDiffuse, vec2(vUv.x, vUv.y)) * 0.18;
+            sum += texture2D(tDiffuse, vec2(vUv.x + 1.0*blur, vUv.y)) * 0.15;
+            sum += texture2D(tDiffuse, vec2(vUv.x + 2.0*blur, vUv.y)) * 0.12;
+            sum += texture2D(tDiffuse, vec2(vUv.x + 3.0*blur, vUv.y)) * 0.09;
+            sum += texture2D(tDiffuse, vec2(vUv.x + 4.0*blur, vUv.y)) * 0.05;
+            
+            gl_FragColor = sum;
+          }
+        `,
       });
 
       // Render the blur pass

@@ -1,88 +1,85 @@
-# SpinCube Interactive 3D Visualization
+# SpinCube
 
 An interactive 3D visualization featuring a spinning cube with dynamic effects, built with Three.js.
 
 ## Features
 
-- Interactive 3D cube with realistic reflections and materials
-- Dynamic background shader that responds to cube interactions
-- Springy physics-based interactions:
-  - Cube continues rotating when "thrown"
-  - Background responds to cube movement with parallax effects
-  - Smooth zoom effects that affect both cube and background
-  - Bounce animations when interacting with the cube
-- Customizable appearance (metallic or glass)
+- Interactive 3D cube with physics-based animations
+- Spring-based rotation system with "throw" physics
+- Dynamic environment mapping with shader-based background
+- Responsive zoom and bounce animations
+- Glass and metallic material options
+- Modular, maintainable code structure
 
-## Interaction Guide
+## Technical Details
 
-- **Mouse Drag**: Rotate the cube with springy physics
-- **Mouse Click**: Trigger bounce animation
-- **Mouse Hold**: Keep the cube in expanded state
-- **Mouse Wheel**: Zoom in/out, affecting both cube and background
+### Physics System
 
-## Technical Overview
+The cube uses a spring-based physics system that allows it to:
 
-### Project Structure
+- Continue spinning when "thrown" with momentum
+- Bounce and scale when clicked
+- Respond to scroll wheel for zooming
+- Maintain expanded state when mouse is held down
 
-```
-spincube/
-├── index.html          # Main HTML entry point
-├── main.js             # Core application logic
-├── constants.js        # Configurable parameters
-├── shaders/
-│   ├── skyVertexShader.js     # Sky shader vertex code
-│   ├── skyFragmentShader.js   # Sky shader fragment code
-│   ├── blurVertexShader.js    # Blur effect vertex shader
-│   ├── blurFragmentShader.js  # Blur effect fragment shader
-└── snoise.glsl.js      # Simplex noise implementation for shaders
-```
+### Visual Effects
 
-### Key Components
+- Dynamic shader-based background that responds to cube movement
+- Environment mapping for realistic reflections
+- Parallax effect that enhances the sense of depth
+- Smooth animations with spring physics
 
-1. **Cube Interaction System**
+### Code Organization
 
-   - Physics-based spring system for natural movement
-   - Velocity-based "throw" mechanics
-   - Scale animations on interaction
+The project follows a modular structure:
 
-2. **Dynamic Background**
+- `main.js` - Core application logic and state management
+- `constants.js` - All configurable parameters
+- `utils/` - Utility functions
+  - `physics.js` - Physics calculations
+  - `animation.js` - Animation helpers
+  - `events.js` - Event handling
+- `components/` - Reusable components
+  - `cube.js` - Cube creation and handling
+  - `environment.js` - Environment setup
+- `shaders/` - All shader code
+  - `skyVertexShader.js`
+  - `skyFragmentShader.js`
+  - `blurVertexShader.js`
+  - `blurFragmentShader.js`
 
-   - Procedurally generated environment using shaders
-   - Responds to cube movement with parallax effects
-   - Dynamically updates based on interaction
+## Usage
 
-3. **Material System**
-   - PBR (Physically Based Rendering) materials
-   - Configurable between metallic and glass appearance
-   - Dynamic environment mapping for realistic reflections
+1. Start a local server:
+
+   ```
+   python -m http.server 8080
+   ```
+
+2. Open in a browser:
+
+   ```
+   http://localhost:8080
+   ```
+
+3. Interact with the cube:
+   - Click and drag to rotate
+   - Click to trigger bounce animation
+   - Scroll to zoom in/out
+   - Hold mouse down to keep the cube in expanded state
 
 ## Customization
 
-The project is highly customizable through the `constants.js` file:
+Most parameters can be adjusted in `constants.js`:
 
-- **Cube Properties**: Size, corner radius, segments
-- **Material Properties**: Color, metalness, roughness, transparency
-- **Animation Parameters**: Spring constants, damping factors, bounce settings
-- **Shader Settings**: Warp amount, checker scale, animation speed
+- Cube size, corner radius, and segments
+- Material properties (metalness, roughness, etc.)
+- Spring constants for physics
+- Animation durations and scales
+- Shader parameters
+
+Toggle between glass and metallic materials by changing `USE_GLASS_MATERIAL` in `constants.js`.
 
 ## Development Guidelines
 
-### Adding New Features
-
-1. For visual changes, consider modifying shader parameters in `constants.js` first
-2. For interaction changes, look at the event handlers in `main.js`
-3. Keep physics calculations separate from rendering code
-4. Use the existing spring system for new animations to maintain consistent feel
-
-### Performance Considerations
-
-- Environment map updates are expensive - use the interval system
-- Consider reducing shader complexity for mobile devices
-- Use appropriate texture sizes based on target devices
-
-### Code Style
-
-- Use consistent naming conventions (camelCase for variables, UPPER_CASE for constants)
-- Group related constants and variables together
-- Add comments for complex physics or shader calculations
-- Keep shader code modular and in separate files
+See [AI_RULES.md](./AI_RULES.md) for development guidelines and best practices.

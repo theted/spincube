@@ -8,10 +8,10 @@ import * as CONST from "./constants.js";
 import {
   skyVertexShader,
   skyVertexShaderFSQ,
-} from "./shaders/skyVertexShader.js";
-import { skyFragmentShader } from "./shaders/skyFragmentShader.js";
-import { blurVertexShader } from "./shaders/blurVertexShader.js";
-import { blurFragmentShader } from "./shaders/blurFragmentShader.js";
+  skyFragmentShader,
+  blurVertexShader,
+  blurFragmentShader,
+} from "./shaders/index.js";
 
 // Import components
 import {
@@ -21,6 +21,7 @@ import {
   handleMouseDownState,
 } from "./components/cube.js";
 import { createEnvironment } from "./components/environment.js";
+import { createDebugUI } from "./components/debugUI.js";
 
 // Import utilities
 import {
@@ -83,6 +84,7 @@ const state = {
   backgroundZoomFactor: 1.0,
   skyShaderMaterial: null,
   updateEnvironmentMap: null,
+  lastEnvMapUpdateTime: 0,
 };
 
 /**
@@ -119,17 +121,13 @@ function init() {
   state.controls.rotateSpeed = 0.7;
   state.controls.target.set(0, 0, 0);
 
-  // Create environment
+  // Create environment and pass shaders
   const environment = createEnvironment(state.scene, state.renderer);
   state.skyShaderMaterial = environment.skyShaderMaterial;
   state.updateEnvironmentMap = environment.updateEnvironmentMap;
 
   // Set shader code
   environment.setSkyShaderCode(skyVertexShaderFSQ, skyFragmentShader);
-  const blurMaterial = environment.createBlurMaterial(
-    blurVertexShader,
-    blurFragmentShader
-  );
 
   // Setup lighting
   environment.setupLighting();
@@ -139,6 +137,10 @@ function init() {
 
   // Create cube
   state.cube = createCube(state.scene);
+
+  // Create debug UI if enabled
+  const debugUI = createDebugUI(state);
+  state.debugUI = debugUI;
 
   // Setup event listeners
   setupEventListeners({
@@ -261,6 +263,11 @@ function animate() {
   ) {
     // Reset parallax too
     state.skyShaderMaterial.uniforms.u_uvOffset.value.set(0, 0);
+  }
+
+  // Update debug UI if enabled
+  if (state.debugUI) {
+    state.debugUI.update();
   }
 
   // Render the scene

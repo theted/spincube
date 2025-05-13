@@ -1,10 +1,13 @@
+// --- Debug mode ---
+export const DEBUG = true; // Toggle debug mode for controls panel
+
 // --- Cube constants ---
 export const CUBE_SIZE = 2.25; // Increased by 50% from 1.5
 export const CORNER_RADIUS = 0.05; // Reduced corner radius for less rounded edges
 export const SEGMENTS = 12; // Increased segments for smoother edges
 
 // --- Material constants ---
-export const USE_GLASS_MATERIAL = true; // Toggle between glass (true) and metallic (false)
+export const USE_GLASS_MATERIAL = false; // Toggle between glass (true) and metallic (false)
 
 // Metallic material properties
 export const MATERIAL_COLOR = 0xffffff; // White color to maximize reflectivity
@@ -37,6 +40,13 @@ export const MOUSE_DRAG_SENSITIVITY = 0.005; // Reduced sensitivity when picking
 export const TARGET_OFFSET_DAMPING_FACTOR = 0.98; // Increased to make cube spin much longer
 export const CUBE_INTERACTION_PARALLAX_FACTOR = 0.025; // Significantly increased parallax effect
 export const THROW_VELOCITY_FACTOR = 1.5; // Increased factor for stronger "throwing" effect
+
+// --- Scroll constants ---
+export const SCROLL_SPRING = 0.1; // Spring constant for scroll physics
+export const SCROLL_DAMPING = 0.2; // Damping factor for scroll physics
+export const SCROLL_SENSITIVITY = 0.001; // Sensitivity for scroll input
+export const MIN_SCROLL_SCALE = 0.5; // Minimum scale when scrolling
+export const MAX_SCROLL_SCALE = 1.5; // Maximum scale when scrolling
 
 // --- Bounce animation constants ---
 export const BOUNCE_DURATION = 0.6; // Slightly longer animation duration
