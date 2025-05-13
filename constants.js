@@ -1,6 +1,6 @@
 // --- Debug mode ---
-export const DEBUG = true; // Toggle debug mode for controls panel
-export const USE_INTENSE_BACKGROUND = false; // Toggle between intense and mellow background
+export const DEBUG = process.env.DEBUG !== false; // Toggle debug mode for controls panel
+export const USE_INTENSE_BACKGROUND = true; // Toggle between intense and mellow background (enabled for darker look)
 
 // --- Cube constants ---
 export const CUBE_SIZE = 2.25; // Increased by 50% from 1.5
@@ -34,7 +34,7 @@ export const ENV_MAP_UPDATE_INTERVAL = 1 / 20; // Update env map at 20 FPS for b
 export const BACKGROUND_BLUR = 0.8; // Increased blur for better performance and aesthetics (0-1)
 
 // --- Cube interaction constants ---
-export const INITIAL_SPIN_SPEED = { x: 0.001, y: 0.002 }; // Reduced spin speed
+export const INITIAL_SPIN_SPEED = { x: 0.003, y: 0.005 }; // Increased spin speed for better visual effect
 export const K_SPRING = 0.08; // Increased springiness for more responsive feel
 export const K_DAMPING = 0.2; // Increased damping for less spin
 export const MOUSE_DRAG_SENSITIVITY = 0.002; // Significantly reduced sensitivity when picking up
