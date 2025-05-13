@@ -13,10 +13,10 @@ export const USE_GLASS_MATERIAL = false; // Toggle between glass (true) and meta
 // Metallic material properties
 export const MATERIAL_COLOR = 0xffffff; // White color to maximize reflectivity
 export const METALNESS = 1.0;
-export const ROUGHNESS = 0.01; // Even shinier than before
-export const ENV_MAP_INTENSITY = 2.0; // Increased intensity for stronger reflections
+export const ROUGHNESS = 0.001; // Ultra-low roughness for maximum shininess
+export const ENV_MAP_INTENSITY = 3.0; // Significantly increased intensity for stronger reflections
 export const CLEARCOAT = 1.0; // Add clearcoat for extra shine
-export const CLEARCOAT_ROUGHNESS = 0.01; // Make clearcoat very smooth
+export const CLEARCOAT_ROUGHNESS = 0.001; // Ultra-smooth clearcoat
 export const REFLECTIVITY = 1.0; // Maximum reflectivity
 
 // Glass material properties
@@ -35,16 +35,16 @@ export const BACKGROUND_BLUR = 0.8; // Increased blur for better performance and
 
 // --- Cube interaction constants ---
 export const INITIAL_SPIN_SPEED = { x: 0.003, y: 0.005 }; // Increased spin speed for better visual effect
-export const K_SPRING = 0.08; // Increased springiness for more responsive feel
-export const K_DAMPING = 0.2; // Increased damping for less spin
+export const K_SPRING = 0.12; // Increased springiness for smoother animations
+export const K_DAMPING = 0.3; // Increased damping for smoother deceleration
 export const MOUSE_DRAG_SENSITIVITY = 0.002; // Significantly reduced sensitivity when picking up
-export const TARGET_OFFSET_DAMPING_FACTOR = 0.9; // Reduced to make cube spin less
+export const TARGET_OFFSET_DAMPING_FACTOR = 0.95; // Increased for smoother transitions
 export const CUBE_INTERACTION_PARALLAX_FACTOR = 0.01; // Reduced parallax effect
-export const THROW_VELOCITY_FACTOR = 0.5; // Reduced factor for gentler "throwing" effect
+export const THROW_VELOCITY_FACTOR = 0.4; // Reduced for more controlled throwing
 
 // --- Scroll constants ---
-export const SCROLL_SPRING = 0.1; // Spring constant for scroll physics
-export const SCROLL_DAMPING = 0.2; // Damping factor for scroll physics
+export const SCROLL_SPRING = 0.15; // Increased spring constant for smoother scroll physics
+export const SCROLL_DAMPING = 0.35; // Increased damping for smoother scroll transitions
 export const SCROLL_SENSITIVITY = 0.001; // Sensitivity for scroll input
 export const MIN_SCROLL_SCALE = 0.5; // Minimum scale when scrolling
 export const MAX_SCROLL_SCALE = 1.5; // Maximum scale when scrolling
