@@ -1,584 +1,528 @@
-import * as THREE from "three";
+/**
+ * Debug UI component for SpinCube
+ * Provides controls for adjusting constants in real-time
+ */
+
 import * as CONST from "../constants.js";
 
 /**
  * Creates a debug UI panel for adjusting constants
  * @param {Object} state - Application state
- * @param {THREE.Scene} state.scene - The scene
- * @param {THREE.Mesh} state.cube - The cube mesh
- * @param {THREE.ShaderMaterial} state.skyShaderMaterial - Sky shader material
- * @param {Function} state.updateEnvironmentMap - Function to update environment map
- * @returns {Object} Debug UI controls and functions
+ * @returns {Object} Debug UI controls
  */
 export function createDebugUI(state) {
-  if (!CONST.DEBUG) return { update: () => {} };
+  // Only create debug UI if DEBUG is true
+  if (!CONST.DEBUG) {
+    return null;
+  }
 
   // Create container
   const container = document.createElement("div");
   container.id = "debug-panel";
-  container.style.position = "absolute";
+  container.style.position = "fixed";
   container.style.top = "10px";
   container.style.right = "10px";
   container.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
   container.style.color = "white";
   container.style.padding = "10px";
   container.style.borderRadius = "5px";
-  container.style.fontFamily = "Arial, sans-serif";
+  container.style.fontFamily = "monospace";
   container.style.fontSize = "12px";
-  container.style.width = "250px";
+  container.style.zIndex = "1000";
+  container.style.width = "300px";
   container.style.maxHeight = "80vh";
   container.style.overflowY = "auto";
-  container.style.zIndex = "1000";
-  container.style.userSelect = "none";
+  container.style.transition = "transform 0.3s ease";
+  container.style.transform = "translateX(310px)";
+
+  // Create header
+  const header = document.createElement("div");
+  header.style.display = "flex";
+  header.style.justifyContent = "space-between";
+  header.style.alignItems = "center";
+  header.style.marginBottom = "10px";
+  header.style.borderBottom = "1px solid #555";
+  header.style.paddingBottom = "5px";
+  container.appendChild(header);
+
+  // Create title
+  const title = document.createElement("h3");
+  title.textContent = "Debug Controls";
+  title.style.margin = "0";
+  header.appendChild(title);
+
+  // Create toggle button
+  const toggleButton = document.createElement("button");
+  toggleButton.textContent = "<<";
+  toggleButton.style.backgroundColor = "#444";
+  toggleButton.style.border = "none";
+  toggleButton.style.color = "white";
+  toggleButton.style.padding = "5px 10px";
+  toggleButton.style.borderRadius = "3px";
+  toggleButton.style.cursor = "pointer";
+  header.appendChild(toggleButton);
+
+  // Toggle panel visibility
+  let isVisible = false;
+  toggleButton.addEventListener("click", () => {
+    isVisible = !isVisible;
+    container.style.transform = isVisible
+      ? "translateX(0)"
+      : "translateX(310px)";
+    toggleButton.textContent = isVisible ? ">>" : "<<";
+  });
+
+  // Create controls container
+  const controlsContainer = document.createElement("div");
+  container.appendChild(controlsContainer);
+
+  // Add to document
   document.body.appendChild(container);
 
-  // Add title
-  const title = document.createElement("h2");
-  title.textContent = "Debug Controls";
-  title.style.margin = "0 0 10px 0";
-  title.style.fontSize = "16px";
-  title.style.textAlign = "center";
-  container.appendChild(title);
-
-  // Create sections
-  const sections = {
-    material: createSection("Material", container),
-    cube: createSection("Cube", container),
-    animation: createSection("Animation", container),
-    shader: createSection("Shader", container),
-  };
-
-  // Store all controls for updating
+  // Create controls
   const controls = {};
 
-  // Material controls
+  // Helper function to create a slider control
+  function createSlider(name, min, max, value, step, onChange) {
+    const controlGroup = document.createElement("div");
+    controlGroup.style.marginBottom = "10px";
+    controlsContainer.appendChild(controlGroup);
+
+    const label = document.createElement("label");
+    label.textContent = name;
+    label.style.display = "block";
+    label.style.marginBottom = "5px";
+    controlGroup.appendChild(label);
+
+    const sliderContainer = document.createElement("div");
+    sliderContainer.style.display = "flex";
+    sliderContainer.style.alignItems = "center";
+    controlGroup.appendChild(sliderContainer);
+
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = min;
+    slider.max = max;
+    slider.step = step;
+    slider.value = value;
+    slider.style.flex = "1";
+    sliderContainer.appendChild(slider);
+
+    const valueDisplay = document.createElement("span");
+    valueDisplay.textContent = value;
+    valueDisplay.style.marginLeft = "10px";
+    valueDisplay.style.width = "40px";
+    valueDisplay.style.textAlign = "right";
+    sliderContainer.appendChild(valueDisplay);
+
+    slider.addEventListener("input", () => {
+      const newValue = parseFloat(slider.value);
+      valueDisplay.textContent = newValue.toFixed(2);
+      if (onChange) {
+        onChange(newValue);
+      }
+    });
+
+    return {
+      element: controlGroup,
+      slider: slider,
+      valueDisplay: valueDisplay,
+      getValue: () => parseFloat(slider.value),
+      setValue: (val) => {
+        slider.value = val;
+        valueDisplay.textContent = parseFloat(val).toFixed(2);
+      },
+    };
+  }
+
+  // Helper function to create a toggle control
+  function createToggle(name, value, onChange) {
+    const controlGroup = document.createElement("div");
+    controlGroup.style.marginBottom = "10px";
+    controlsContainer.appendChild(controlGroup);
+
+    const label = document.createElement("label");
+    label.style.display = "flex";
+    label.style.alignItems = "center";
+    label.style.cursor = "pointer";
+    controlGroup.appendChild(label);
+
+    const toggle = document.createElement("input");
+    toggle.type = "checkbox";
+    toggle.checked = value;
+    toggle.style.marginRight = "10px";
+    label.appendChild(toggle);
+
+    const text = document.createElement("span");
+    text.textContent = name;
+    label.appendChild(text);
+
+    toggle.addEventListener("change", () => {
+      if (onChange) {
+        onChange(toggle.checked);
+      }
+    });
+
+    return {
+      element: controlGroup,
+      toggle: toggle,
+      getValue: () => toggle.checked,
+      setValue: (val) => {
+        toggle.checked = val;
+      },
+    };
+  }
+
+  // Create section for cube appearance
+  const appearanceSection = document.createElement("div");
+  appearanceSection.style.marginBottom = "15px";
+  appearanceSection.style.borderBottom = "1px solid #555";
+  appearanceSection.style.paddingBottom = "10px";
+  controlsContainer.appendChild(appearanceSection);
+
+  const appearanceTitle = document.createElement("h4");
+  appearanceTitle.textContent = "Cube Appearance";
+  appearanceTitle.style.margin = "5px 0";
+  appearanceSection.appendChild(appearanceTitle);
+
+  // Material toggle
   controls.useMaterial = createToggle(
-    "Material Type",
+    "Use Glass Material",
     CONST.USE_GLASS_MATERIAL,
     (value) => {
-      // Replace the cube's material
-      if (value) {
-        state.cube.material = createGlassMaterial();
-      } else {
-        state.cube.material = createMetallicMaterial();
+      CONST.USE_GLASS_MATERIAL = value;
+      // Reload page to apply material change
+      if (confirm("Changing material requires a page reload. Reload now?")) {
+        window.location.reload();
       }
-      // Update environment map to reflect changes
-      state.updateEnvironmentMap();
-    },
-    ["Metallic", "Glass"],
-    sections.material
+    }
   );
+  appearanceSection.appendChild(controls.useMaterial.element);
 
+  // Metalness slider
   controls.metalness = createSlider(
     "Metalness",
-    CONST.METALNESS,
     0,
     1,
+    CONST.METALNESS,
     0.01,
     (value) => {
-      if (!CONST.USE_GLASS_MATERIAL && state.cube.material) {
-        state.cube.material.metalness = value;
-        state.updateEnvironmentMap();
+      CONST.METALNESS = value;
+      // Find the cube mesh and update its material
+      if (state.cube && state.cube.children && state.cube.children.length > 0) {
+        const cubeMesh = state.cube.children[0];
+        if (cubeMesh && cubeMesh.material) {
+          cubeMesh.material.metalness = value;
+          cubeMesh.material.needsUpdate = true;
+        }
       }
-    },
-    sections.material
+    }
   );
+  appearanceSection.appendChild(controls.metalness.element);
 
+  // Roughness slider
   controls.roughness = createSlider(
     "Roughness",
-    CONST.ROUGHNESS,
     0,
     1,
+    CONST.ROUGHNESS,
     0.01,
     (value) => {
-      if (state.cube.material) {
-        state.cube.material.roughness = value;
-        state.updateEnvironmentMap();
+      CONST.ROUGHNESS = value;
+      // Find the cube mesh and update its material
+      if (state.cube && state.cube.children && state.cube.children.length > 0) {
+        const cubeMesh = state.cube.children[0];
+        if (cubeMesh && cubeMesh.material) {
+          cubeMesh.material.roughness = value;
+          cubeMesh.material.needsUpdate = true;
+        }
       }
-    },
-    sections.material
+    }
   );
+  appearanceSection.appendChild(controls.roughness.element);
 
+  // Environment map intensity slider
   controls.envMapIntensity = createSlider(
     "Env Map Intensity",
-    CONST.ENV_MAP_INTENSITY,
     0,
-    5,
+    3,
+    CONST.ENV_MAP_INTENSITY,
     0.1,
     (value) => {
-      if (state.cube.material) {
-        state.cube.material.envMapIntensity = value;
-        state.updateEnvironmentMap();
+      CONST.ENV_MAP_INTENSITY = value;
+      // Find the cube mesh and update its material
+      if (state.cube && state.cube.children && state.cube.children.length > 0) {
+        const cubeMesh = state.cube.children[0];
+        if (cubeMesh && cubeMesh.material) {
+          cubeMesh.material.envMapIntensity = value;
+          cubeMesh.material.needsUpdate = true;
+        }
       }
-    },
-    sections.material
+    }
   );
+  appearanceSection.appendChild(controls.envMapIntensity.element);
 
-  // Cube controls
+  // Cube size slider
   controls.cubeSize = createSlider(
     "Cube Size",
+    0.5,
+    2,
     CONST.CUBE_SIZE,
-    1,
-    5,
     0.1,
     (value) => {
-      // Can't change geometry directly, would need to recreate the cube
-      // This is just for demonstration
-    },
-    sections.cube
+      CONST.CUBE_SIZE = value;
+      // Reload page to apply size change
+      if (confirm("Changing cube size requires a page reload. Reload now?")) {
+        window.location.reload();
+      }
+    }
   );
+  appearanceSection.appendChild(controls.cubeSize.element);
 
+  // Create section for animation
+  const animationSection = document.createElement("div");
+  animationSection.style.marginBottom = "15px";
+  animationSection.style.borderBottom = "1px solid #555";
+  animationSection.style.paddingBottom = "10px";
+  controlsContainer.appendChild(animationSection);
+
+  const animationTitle = document.createElement("h4");
+  animationTitle.textContent = "Animation";
+  animationTitle.style.margin = "5px 0";
+  animationSection.appendChild(animationTitle);
+
+  // Spin speed X slider
   controls.spinSpeedX = createSlider(
     "Spin Speed X",
-    CONST.INITIAL_SPIN_SPEED.x,
-    0,
+    -0.01,
     0.01,
+    CONST.INITIAL_SPIN_SPEED.x,
     0.001,
     (value) => {
+      CONST.INITIAL_SPIN_SPEED.x = value;
       state.initialSpinSpeed.x = value;
-    },
-    sections.cube
+    }
   );
+  animationSection.appendChild(controls.spinSpeedX.element);
 
+  // Spin speed Y slider
   controls.spinSpeedY = createSlider(
     "Spin Speed Y",
-    CONST.INITIAL_SPIN_SPEED.y,
-    0,
+    -0.01,
     0.01,
+    CONST.INITIAL_SPIN_SPEED.y,
     0.001,
     (value) => {
+      CONST.INITIAL_SPIN_SPEED.y = value;
       state.initialSpinSpeed.y = value;
-    },
-    sections.cube
+    }
   );
+  animationSection.appendChild(controls.spinSpeedY.element);
 
-  // Animation controls
+  // Bounce duration slider
   controls.bounceDuration = createSlider(
     "Bounce Duration",
+    0.1,
+    2,
     CONST.BOUNCE_DURATION,
     0.1,
-    2,
-    0.1,
     (value) => {
-      // This will affect the next bounce
-    },
-    sections.animation
+      CONST.BOUNCE_DURATION = value;
+    }
   );
+  animationSection.appendChild(controls.bounceDuration.element);
 
+  // Bounce max scale slider
   controls.bounceMaxScale = createSlider(
     "Bounce Max Scale",
-    CONST.BOUNCE_MAX_SCALE,
     1,
-    2,
-    0.1,
+    1.5,
+    CONST.BOUNCE_MAX_SCALE,
+    0.05,
     (value) => {
-      // This will affect the next bounce
-    },
-    sections.animation
+      CONST.BOUNCE_MAX_SCALE = value;
+    }
   );
+  animationSection.appendChild(controls.bounceMaxScale.element);
 
+  // Create section for physics
+  const physicsSection = document.createElement("div");
+  physicsSection.style.marginBottom = "15px";
+  physicsSection.style.borderBottom = "1px solid #555";
+  physicsSection.style.paddingBottom = "10px";
+  controlsContainer.appendChild(physicsSection);
+
+  const physicsTitle = document.createElement("h4");
+  physicsTitle.textContent = "Physics";
+  physicsTitle.style.margin = "5px 0";
+  physicsSection.appendChild(physicsTitle);
+
+  // Spring constant slider
   controls.springConstant = createSlider(
     "Spring Constant",
+    0.01,
+    0.2,
     CONST.K_SPRING,
     0.01,
-    0.2,
-    0.01,
     (value) => {
-      // This will affect the next interaction
-    },
-    sections.animation
+      CONST.K_SPRING = value;
+    }
   );
+  physicsSection.appendChild(controls.springConstant.element);
 
+  // Damping factor slider
   controls.dampingFactor = createSlider(
     "Damping Factor",
+    0.01,
+    0.2,
     CONST.K_DAMPING,
     0.01,
-    0.5,
-    0.01,
     (value) => {
-      // This will affect the next interaction
-    },
-    sections.animation
+      CONST.K_DAMPING = value;
+    }
   );
+  physicsSection.appendChild(controls.dampingFactor.element);
 
-  // Shader controls
-  controls.useIntenseBackground = createToggle(
-    "Background Style",
-    CONST.USE_INTENSE_BACKGROUND,
-    (value) => {
-      state.skyShaderMaterial.uniforms.u_useIntenseBackground.value = value;
-      state.updateEnvironmentMap();
-    },
-    ["Mellow", "Intense"],
-    sections.shader
-  );
+  // Create section for background
+  const backgroundSection = document.createElement("div");
+  backgroundSection.style.marginBottom = "15px";
+  controlsContainer.appendChild(backgroundSection);
 
+  const backgroundTitle = document.createElement("h4");
+  backgroundTitle.textContent = "Background";
+  backgroundTitle.style.margin = "5px 0";
+  backgroundSection.appendChild(backgroundTitle);
+
+  // Warp amount slider
   controls.warpAmount = createSlider(
     "Warp Amount",
-    CONST.WARP_AMOUNT,
     0,
-    0.2,
-    0.01,
+    1,
+    CONST.WARP_AMOUNT,
+    0.05,
     (value) => {
-      state.skyShaderMaterial.uniforms.u_warpAmount.value = value;
-      state.updateEnvironmentMap();
-    },
-    sections.shader
+      CONST.WARP_AMOUNT = value;
+      if (state.skyShaderMaterial) {
+        state.skyShaderMaterial.uniforms.u_warpAmount.value = value;
+      }
+    }
   );
+  backgroundSection.appendChild(controls.warpAmount.element);
 
+  // Warp frequency slider
   controls.warpFrequency = createSlider(
     "Warp Frequency",
-    CONST.WARP_FREQUENCY,
     1,
     10,
+    CONST.WARP_FREQUENCY,
     0.5,
     (value) => {
-      state.skyShaderMaterial.uniforms.u_warpFrequency.value = value;
-      state.updateEnvironmentMap();
-    },
-    sections.shader
+      CONST.WARP_FREQUENCY = value;
+      if (state.skyShaderMaterial) {
+        state.skyShaderMaterial.uniforms.u_warpFrequency.value = value;
+      }
+    }
   );
+  backgroundSection.appendChild(controls.warpFrequency.element);
 
+  // Warp speed slider
   controls.warpSpeed = createSlider(
     "Warp Speed",
-    CONST.WARP_SPEED,
     0,
-    0.5,
-    0.01,
+    2,
+    CONST.WARP_SPEED,
+    0.1,
     (value) => {
-      state.skyShaderMaterial.uniforms.u_warpSpeed.value = value;
-      state.updateEnvironmentMap();
-    },
-    sections.shader
+      CONST.WARP_SPEED = value;
+      if (state.skyShaderMaterial) {
+        state.skyShaderMaterial.uniforms.u_warpSpeed.value = value;
+      }
+    }
   );
+  backgroundSection.appendChild(controls.warpSpeed.element);
 
+  // Checker scale slider
   controls.checkerScale = createSlider(
     "Checker Scale",
-    CONST.CHECKER_SCALE,
+    0.5,
     5,
-    50,
-    1,
+    CONST.CHECKER_SCALE,
+    0.1,
     (value) => {
-      state.skyShaderMaterial.uniforms.u_checkerScale.value = value;
-      state.updateEnvironmentMap();
-    },
-    sections.shader
-  );
-
-  // Add a reset button
-  const resetButton = document.createElement("button");
-  resetButton.textContent = "Reset All";
-  resetButton.style.width = "100%";
-  resetButton.style.padding = "8px";
-  resetButton.style.marginTop = "10px";
-  resetButton.style.backgroundColor = "#555";
-  resetButton.style.border = "none";
-  resetButton.style.borderRadius = "4px";
-  resetButton.style.color = "white";
-  resetButton.style.cursor = "pointer";
-  resetButton.addEventListener("click", () => {
-    // Reset all controls to their default values
-    for (const key in controls) {
-      if (controls[key].reset) {
-        controls[key].reset();
+      CONST.CHECKER_SCALE = value;
+      if (state.skyShaderMaterial) {
+        state.skyShaderMaterial.uniforms.u_checkerScale.value =
+          value * state.backgroundZoomFactor;
       }
     }
-    // Update environment map
-    state.updateEnvironmentMap();
-  });
-  container.appendChild(resetButton);
+  );
+  backgroundSection.appendChild(controls.checkerScale.element);
 
-  // Add a save settings button
+  // Create save button
   const saveButton = document.createElement("button");
   saveButton.textContent = "Save Settings";
-  saveButton.style.width = "100%";
-  saveButton.style.padding = "8px";
-  saveButton.style.marginTop = "10px";
-  saveButton.style.backgroundColor = "#2a6";
+  saveButton.style.backgroundColor = "#4CAF50";
   saveButton.style.border = "none";
-  saveButton.style.borderRadius = "4px";
   saveButton.style.color = "white";
+  saveButton.style.padding = "8px 16px";
+  saveButton.style.borderRadius = "3px";
   saveButton.style.cursor = "pointer";
+  saveButton.style.width = "100%";
+  saveButton.style.marginTop = "10px";
+  controlsContainer.appendChild(saveButton);
+
+  // Save settings to localStorage
   saveButton.addEventListener("click", () => {
-    // Collect all current settings
-    const settings = {};
-    for (const key in controls) {
-      if (controls[key].getValue) {
-        settings[key] = controls[key].getValue();
-      }
-    }
-    // Save to localStorage
+    const settings = {
+      useMaterial: CONST.USE_GLASS_MATERIAL,
+      metalness: CONST.METALNESS,
+      roughness: CONST.ROUGHNESS,
+      envMapIntensity: CONST.ENV_MAP_INTENSITY,
+      cubeSize: CONST.CUBE_SIZE,
+      spinSpeedX: CONST.INITIAL_SPIN_SPEED.x,
+      spinSpeedY: CONST.INITIAL_SPIN_SPEED.y,
+      bounceDuration: CONST.BOUNCE_DURATION,
+      bounceMaxScale: CONST.BOUNCE_MAX_SCALE,
+      springConstant: CONST.K_SPRING,
+      dampingFactor: CONST.K_DAMPING,
+      warpAmount: CONST.WARP_AMOUNT,
+      warpFrequency: CONST.WARP_FREQUENCY,
+      warpSpeed: CONST.WARP_SPEED,
+      checkerScale: CONST.CHECKER_SCALE,
+    };
     localStorage.setItem("spincube-settings", JSON.stringify(settings));
-
-    // Show a confirmation message
-    const message = document.createElement("div");
-    message.textContent = "Settings saved!";
-    message.style.padding = "5px";
-    message.style.marginTop = "5px";
-    message.style.backgroundColor = "rgba(42, 102, 42, 0.7)";
-    message.style.borderRadius = "4px";
-    message.style.textAlign = "center";
-    container.appendChild(message);
-
-    // Remove the message after 2 seconds
-    setTimeout(() => {
-      container.removeChild(message);
-    }, 2000);
+    alert("Settings saved! They will be loaded next time you open the app.");
   });
-  container.appendChild(saveButton);
 
-  // Add a toggle button to show/hide the panel
-  const toggleButton = document.createElement("button");
-  toggleButton.textContent = "Hide Panel";
-  toggleButton.style.position = "absolute";
-  toggleButton.style.top = "10px";
-  toggleButton.style.right = "270px";
-  toggleButton.style.padding = "5px 10px";
-  toggleButton.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-  toggleButton.style.color = "white";
-  toggleButton.style.border = "none";
-  toggleButton.style.borderRadius = "5px";
-  toggleButton.style.cursor = "pointer";
-  toggleButton.style.zIndex = "1000";
-  document.body.appendChild(toggleButton);
+  // Create reset button
+  const resetButton = document.createElement("button");
+  resetButton.textContent = "Reset to Defaults";
+  resetButton.style.backgroundColor = "#f44336";
+  resetButton.style.border = "none";
+  resetButton.style.color = "white";
+  resetButton.style.padding = "8px 16px";
+  resetButton.style.borderRadius = "3px";
+  resetButton.style.cursor = "pointer";
+  resetButton.style.width = "100%";
+  resetButton.style.marginTop = "10px";
+  controlsContainer.appendChild(resetButton);
 
-  let isPanelVisible = true;
-  toggleButton.addEventListener("click", () => {
-    isPanelVisible = !isPanelVisible;
-    container.style.display = isPanelVisible ? "block" : "none";
-    toggleButton.textContent = isPanelVisible ? "Hide Panel" : "Show Panel";
+  // Reset settings to defaults
+  resetButton.addEventListener("click", () => {
+    if (confirm("Reset all settings to defaults?")) {
+      localStorage.removeItem("spincube-settings");
+      window.location.reload();
+    }
   });
+
+  // Update function to update UI values from state
+  function update() {
+    // Update UI values if needed
+  }
 
   return {
     controls,
-    update: () => {
-      // Update any controls that need continuous updating
-    },
+    update,
+    container,
   };
-}
-
-/**
- * Creates a section in the debug panel
- * @param {string} title - Section title
- * @param {HTMLElement} parent - Parent element
- * @returns {HTMLElement} The section element
- */
-function createSection(title, parent) {
-  const section = document.createElement("div");
-  section.style.marginBottom = "15px";
-
-  const sectionTitle = document.createElement("h3");
-  sectionTitle.textContent = title;
-  sectionTitle.style.margin = "0 0 5px 0";
-  sectionTitle.style.fontSize = "14px";
-  sectionTitle.style.borderBottom = "1px solid #555";
-  sectionTitle.style.paddingBottom = "3px";
-
-  section.appendChild(sectionTitle);
-  parent.appendChild(section);
-
-  return section;
-}
-
-/**
- * Creates a slider control
- * @param {string} label - Control label
- * @param {number} initialValue - Initial value
- * @param {number} min - Minimum value
- * @param {number} max - Maximum value
- * @param {number} step - Step value
- * @param {Function} onChange - Change handler
- * @param {HTMLElement} parent - Parent element
- * @returns {Object} The slider control
- */
-function createSlider(label, initialValue, min, max, step, onChange, parent) {
-  const container = document.createElement("div");
-  container.style.marginBottom = "8px";
-
-  const labelElement = document.createElement("div");
-  labelElement.style.display = "flex";
-  labelElement.style.justifyContent = "space-between";
-  labelElement.style.marginBottom = "2px";
-
-  const nameSpan = document.createElement("span");
-  nameSpan.textContent = label;
-
-  const valueSpan = document.createElement("span");
-  valueSpan.textContent = initialValue.toFixed(2);
-
-  labelElement.appendChild(nameSpan);
-  labelElement.appendChild(valueSpan);
-
-  const slider = document.createElement("input");
-  slider.type = "range";
-  slider.min = min;
-  slider.max = max;
-  slider.step = step;
-  slider.value = initialValue;
-  slider.style.width = "100%";
-  slider.style.margin = "0";
-
-  slider.addEventListener("input", () => {
-    const value = parseFloat(slider.value);
-    valueSpan.textContent = value.toFixed(2);
-    onChange(value);
-  });
-
-  container.appendChild(labelElement);
-  container.appendChild(slider);
-  parent.appendChild(container);
-
-  return {
-    element: container,
-    getValue: () => parseFloat(slider.value),
-    setValue: (value) => {
-      slider.value = value;
-      valueSpan.textContent = value.toFixed(2);
-      onChange(value);
-    },
-    reset: () => {
-      slider.value = initialValue;
-      valueSpan.textContent = initialValue.toFixed(2);
-      onChange(initialValue);
-    },
-  };
-}
-
-/**
- * Creates a toggle control
- * @param {string} label - Control label
- * @param {boolean} initialValue - Initial value
- * @param {Function} onChange - Change handler
- * @param {Array<string>} labels - Labels for false/true states
- * @param {HTMLElement} parent - Parent element
- * @returns {Object} The toggle control
- */
-function createToggle(label, initialValue, onChange, labels, parent) {
-  const container = document.createElement("div");
-  container.style.marginBottom = "8px";
-
-  const labelElement = document.createElement("div");
-  labelElement.style.display = "flex";
-  labelElement.style.justifyContent = "space-between";
-  labelElement.style.marginBottom = "2px";
-
-  const nameSpan = document.createElement("span");
-  nameSpan.textContent = label;
-
-  const valueSpan = document.createElement("span");
-  valueSpan.textContent = initialValue ? labels[1] : labels[0];
-
-  labelElement.appendChild(nameSpan);
-  labelElement.appendChild(valueSpan);
-
-  const toggle = document.createElement("div");
-  toggle.style.width = "100%";
-  toggle.style.height = "24px";
-  toggle.style.backgroundColor = "#555";
-  toggle.style.borderRadius = "12px";
-  toggle.style.position = "relative";
-  toggle.style.cursor = "pointer";
-
-  const toggleButton = document.createElement("div");
-  toggleButton.style.width = "50%";
-  toggleButton.style.height = "100%";
-  toggleButton.style.backgroundColor = "#888";
-  toggleButton.style.borderRadius = "12px";
-  toggleButton.style.position = "absolute";
-  toggleButton.style.left = initialValue ? "50%" : "0";
-  toggleButton.style.transition = "left 0.2s";
-
-  const leftLabel = document.createElement("div");
-  leftLabel.textContent = labels[0];
-  leftLabel.style.position = "absolute";
-  leftLabel.style.left = "10px";
-  leftLabel.style.top = "50%";
-  leftLabel.style.transform = "translateY(-50%)";
-  leftLabel.style.color = initialValue ? "#fff" : "#000";
-  leftLabel.style.fontSize = "10px";
-  leftLabel.style.fontWeight = "bold";
-
-  const rightLabel = document.createElement("div");
-  rightLabel.textContent = labels[1];
-  rightLabel.style.position = "absolute";
-  rightLabel.style.right = "10px";
-  rightLabel.style.top = "50%";
-  rightLabel.style.transform = "translateY(-50%)";
-  rightLabel.style.color = initialValue ? "#000" : "#fff";
-  rightLabel.style.fontSize = "10px";
-  rightLabel.style.fontWeight = "bold";
-
-  toggle.appendChild(toggleButton);
-  toggle.appendChild(leftLabel);
-  toggle.appendChild(rightLabel);
-
-  let value = initialValue;
-
-  toggle.addEventListener("click", () => {
-    value = !value;
-    toggleButton.style.left = value ? "50%" : "0";
-    valueSpan.textContent = value ? labels[1] : labels[0];
-    leftLabel.style.color = value ? "#fff" : "#000";
-    rightLabel.style.color = value ? "#000" : "#fff";
-    onChange(value);
-  });
-
-  container.appendChild(labelElement);
-  container.appendChild(toggle);
-  parent.appendChild(container);
-
-  return {
-    element: container,
-    getValue: () => value,
-    setValue: (newValue) => {
-      value = newValue;
-      toggleButton.style.left = value ? "50%" : "0";
-      valueSpan.textContent = value ? labels[1] : labels[0];
-      leftLabel.style.color = value ? "#fff" : "#000";
-      rightLabel.style.color = value ? "#000" : "#fff";
-      onChange(value);
-    },
-    reset: () => {
-      value = initialValue;
-      toggleButton.style.left = value ? "50%" : "0";
-      valueSpan.textContent = value ? labels[1] : labels[0];
-      leftLabel.style.color = value ? "#fff" : "#000";
-      rightLabel.style.color = value ? "#000" : "#fff";
-      onChange(value);
-    },
-  };
-}
-
-/**
- * Creates a glass material for the cube
- * @returns {THREE.MeshPhysicalMaterial} The glass material
- */
-function createGlassMaterial() {
-  return new THREE.MeshPhysicalMaterial({
-    color: CONST.GLASS_COLOR,
-    metalness: CONST.GLASS_METALNESS,
-    roughness: CONST.GLASS_ROUGHNESS,
-    transmission: CONST.GLASS_TRANSMISSION,
-    thickness: CONST.GLASS_THICKNESS,
-    ior: CONST.GLASS_IOR,
-    envMapIntensity: CONST.GLASS_ENV_MAP_INTENSITY,
-    transparent: true,
-    side: THREE.DoubleSide,
-  });
-}
-
-/**
- * Creates a metallic material for the cube
- * @returns {THREE.MeshPhysicalMaterial} The metallic material
- */
-function createMetallicMaterial() {
-  return new THREE.MeshPhysicalMaterial({
-    color: CONST.MATERIAL_COLOR,
-    metalness: CONST.METALNESS,
-    roughness: CONST.ROUGHNESS,
-    envMapIntensity: CONST.ENV_MAP_INTENSITY,
-    clearcoat: CONST.CLEARCOAT,
-    clearcoatRoughness: CONST.CLEARCOAT_ROUGHNESS,
-    reflectivity: CONST.REFLECTIVITY,
-  });
 }

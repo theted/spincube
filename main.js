@@ -56,13 +56,15 @@ if (CONST.DEBUG) {
   }
 }
 
-// Import shaders
+// Import all shaders from the centralized index
 import {
   skyVertexShader,
   skyVertexShaderFSQ,
   skyFragmentShader,
   blurVertexShader,
   blurFragmentShader,
+  cubeVertexShader,
+  cubeFragmentShader,
 } from "./shaders/index.js";
 
 // Import components

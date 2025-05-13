@@ -1,16 +1,16 @@
 /**
- * Shader exports
- * This file exports all shader code for easier imports
+ * Shader exports for the SpinCube application
+ * This file centralizes all shader imports and exports
  */
 
-// Import shaders
-import { skyVertexShader } from "./skyVertexShader.js";
-import { skyVertexShaderFSQ } from "./skyVertexShaderFSQ.js";
-import { skyFragmentShader } from "./skyFragmentShader.js";
-import { blurVertexShader } from "./blurVertexShader.js";
-import { blurFragmentShader } from "./blurFragmentShader.js";
-import { cubeVertexShader } from "./cubeVertexShader.js";
-import { cubeFragmentShader } from "./cubeFragmentShader.js";
+// Import all shaders
+import { default as skyVertexShader } from "./skyVertexShader.js";
+import { default as skyVertexShaderFSQ } from "./skyVertexShaderFSQ.js";
+import { default as skyFragmentShader } from "./skyFragmentShader.js";
+import { default as blurVertexShader } from "./blurVertexShader.js";
+import { default as blurFragmentShader } from "./blurFragmentShader.js";
+import { default as cubeVertexShader } from "./cubeVertexShader.js";
+import { default as cubeFragmentShader } from "./cubeFragmentShader.js";
 
 // Export all shaders
 export {
