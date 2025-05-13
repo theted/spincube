@@ -54,14 +54,16 @@ function init() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0; // Adjust as needed with shader bg
+  renderer.toneMappingExposure = 1.5; // Increased exposure for brighter scene
   document.body.appendChild(renderer.domElement);
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
-  controls.minDistance = 1.5;
-  controls.maxDistance = 10;
+  controls.dampingFactor = 0.1; // Increased for smoother movement
+  controls.minDistance = 3.0; // Increased minimum distance
+  controls.maxDistance = 6.0; // Decreased maximum distance for less extreme zoom
+  controls.zoomSpeed = 0.5; // Slower zoom for smoother experience
+  controls.rotateSpeed = 0.7; // Adjusted rotation speed
   controls.target.set(0, 0, 0);
 
   // --- Initialize PMREMGenerator and Render Target for Sky Shader ---
@@ -141,15 +143,15 @@ function init() {
             // Calculate checkerboard pattern on warped UVs
             float pattern = checker(warpedUv, u_checkerScale);
 
-            vec3 color1 = vec3(0.05, 0.05, 0.1); // Darker part of checker
-            vec3 color2 = vec3(0.15, 0.15, 0.25); // Lighter part of checker
+            vec3 color1 = vec3(0.1, 0.1, 0.2); // Brighter darker part
+            vec3 color2 = vec3(0.3, 0.3, 0.5); // Brighter lighter part
             
             vec3 finalColor = mix(color1, color2, pattern);
             
-            // Add a subtle glow or atmospheric effect based on view direction (optional)
-            // vec3 viewDir = equirectToDirection(vUv); // original vUv for direction
-            // float horizonFactor = smoothstep(0.0, 0.3, viewDir.y); // Stronger effect near horizon
-            // finalColor = mix(finalColor, vec3(0.2, 0.25, 0.35) * 0.5, horizonFactor * 0.3);
+            // Add a subtle glow or atmospheric effect based on view direction
+            vec3 viewDir = equirectToDirection(vUv); // original vUv for direction
+            float horizonFactor = smoothstep(0.0, 0.3, abs(viewDir.y)); // Stronger effect near horizon
+            finalColor = mix(finalColor, vec3(0.4, 0.4, 0.6) * 0.8, horizonFactor * 0.4);
 
 
             gl_FragColor = vec4(finalColor, 1.0);
@@ -177,13 +179,22 @@ function init() {
   updateEnvironmentMap();
 
   // Lights (will be mostly PBR reflections from the shader environment)
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.1); // Low, as env provides most light
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3); // Increased ambient light intensity
   scene.add(ambientLight);
 
+  // Add directional lights for enhanced reflections
+  const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+  directionalLight1.position.set(1, 1, 1);
+  scene.add(directionalLight1);
+
+  const directionalLight2 = new THREE.DirectionalLight(0xccccff, 0.5); // Slightly blue light from another angle
+  directionalLight2.position.set(-1, 0.5, -1);
+  scene.add(directionalLight2);
+
   // Cube
-  const cubeSize = 1.5;
-  const cornerRadius = 0.15;
-  const segments = 10;
+  const cubeSize = 2.25; // Increased by 50% from 1.5
+  const cornerRadius = 0.05; // Reduced corner radius for less rounded edges
+  const segments = 12; // Increased segments for smoother edges
   const geometry = new RoundedBoxGeometry(
     cubeSize,
     cubeSize,
@@ -191,11 +202,14 @@ function init() {
     segments,
     cornerRadius
   );
-  const material = new THREE.MeshStandardMaterial({
-    color: 0x555555,
+  const material = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff, // White color to maximize reflectivity
     metalness: 1.0,
-    roughness: 0.05, // Even shinier
-    envMapIntensity: 1.0, // Make sure it uses the env map strongly
+    roughness: 0.01, // Even shinier than before
+    envMapIntensity: 2.0, // Increased intensity for stronger reflections
+    clearcoat: 1.0, // Add clearcoat for extra shine
+    clearcoatRoughness: 0.01, // Make clearcoat very smooth
+    reflectivity: 1.0, // Maximum reflectivity
   });
   cube = new THREE.Mesh(geometry, material);
   scene.add(cube);
