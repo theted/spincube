@@ -9,12 +9,12 @@ import * as THREE from "three";
  * @param {Function} callback - Callback function that receives the created mesh
  */
 export function create3DLetter(callback) {
-  // Create a letter S with inward beveling using a two-layer approach
+  // Create a letter S with inward beveling using a multi-layer approach
   createInwardBeveledLetterS(callback);
 }
 
 /**
- * Creates a letter "S" with inward beveling using a two-layer approach
+ * Creates a letter "S" with pronounced inward beveling using a multi-layer approach
  * @param {Function} callback - Callback function that receives the created mesh
  */
 function createInwardBeveledLetterS(callback) {
@@ -33,7 +33,7 @@ function createInwardBeveledLetterS(callback) {
   // Create a simple shape for the letter "S" (outer shape)
   const outerShape = new THREE.Shape();
   
-  // Define a simple "S" shape
+  // Define a simple "S" shape - keeping the shape the user liked
   outerShape.moveTo(-0.3, 0.3);  // Top-left
   outerShape.lineTo(0.3, 0.3);   // Top-right
   outerShape.lineTo(0.3, 0.1);   // Right edge down
@@ -51,73 +51,56 @@ function createInwardBeveledLetterS(callback) {
   // Create the base (background) for the letter
   const baseGeometry = new THREE.ShapeGeometry(outerShape);
   const baseMesh = new THREE.Mesh(baseGeometry, material.clone());
-  baseMesh.position.z = -0.05; // Position slightly behind
+  baseMesh.position.z = 0.05; // Position slightly forward
   letterGroup.add(baseMesh);
   
-  // Create a smaller inset shape for the letter "S" (inner shape)
-  // This will be positioned slightly in front of the base to create the inward bevel effect
-  const insetShape = new THREE.Shape();
+  // Create multiple inset layers for a more pronounced inward bevel
+  const numLayers = 5; // More layers for a smoother inward bevel
+  const maxDepth = 0.15; // Total depth of the inward bevel
   
-  // Scale factor for the inset (smaller than the outer shape)
-  const scale = 0.8;
-  const offset = (1 - scale) * 0.3; // Offset to keep centered
+  for (let i = 0; i < numLayers; i++) {
+    // Calculate scale and depth for this layer
+    const scale = 1.0 - (i * 0.1); // Each layer is 10% smaller
+    const depth = 0.05 - (i * (maxDepth / numLayers)); // Gradually move inward
+    
+    // Calculate offset to keep centered
+    const offset = (1 - scale) * 0.3;
+    
+    // Create shape for this layer
+    const layerShape = new THREE.Shape();
+    
+    // Define the scaled "S" shape
+    layerShape.moveTo(-0.3 * scale + offset, 0.3 * scale + offset);  // Top-left
+    layerShape.lineTo(0.3 * scale + offset, 0.3 * scale + offset);   // Top-right
+    layerShape.lineTo(0.3 * scale + offset, 0.1 * scale + offset);   // Right edge down
+    layerShape.lineTo(-0.1 * scale + offset, 0.1 * scale + offset);  // Middle-top
+    layerShape.lineTo(-0.1 * scale + offset, 0 * scale + offset);    // Middle-left
+    layerShape.lineTo(0.3 * scale + offset, 0 * scale + offset);     // Middle-right
+    layerShape.lineTo(0.3 * scale + offset, -0.3 * scale + offset);  // Bottom-right
+    layerShape.lineTo(-0.3 * scale + offset, -0.3 * scale + offset); // Bottom-left
+    layerShape.lineTo(-0.3 * scale + offset, -0.1 * scale + offset); // Left edge up
+    layerShape.lineTo(0.1 * scale + offset, -0.1 * scale + offset);  // Middle-bottom
+    layerShape.lineTo(0.1 * scale + offset, 0 * scale + offset);     // Middle-right
+    layerShape.lineTo(-0.3 * scale + offset, 0 * scale + offset);    // Middle-left
+    layerShape.lineTo(-0.3 * scale + offset, 0.3 * scale + offset);  // Back to top-left
+    
+    // Create geometry for this layer
+    const layerGeometry = new THREE.ShapeGeometry(layerShape);
+    
+    // Create material with progressively darker color
+    const layerMaterial = material.clone();
+    // Calculate color: progressively darker as we go deeper
+    const colorValue = Math.max(0x44, 0xdd - (i * 0x33));
+    layerMaterial.color.setHex((colorValue << 16) | (colorValue << 8) | colorValue);
+    
+    // Create mesh for this layer
+    const layerMesh = new THREE.Mesh(layerGeometry, layerMaterial);
+    layerMesh.position.z = depth;
+    letterGroup.add(layerMesh);
+  }
   
-  // Define a smaller "S" shape
-  insetShape.moveTo(-0.3 * scale + offset, 0.3 * scale + offset);  // Top-left
-  insetShape.lineTo(0.3 * scale + offset, 0.3 * scale + offset);   // Top-right
-  insetShape.lineTo(0.3 * scale + offset, 0.1 * scale + offset);   // Right edge down
-  insetShape.lineTo(-0.1 * scale + offset, 0.1 * scale + offset);  // Middle-top
-  insetShape.lineTo(-0.1 * scale + offset, 0 * scale + offset);    // Middle-left
-  insetShape.lineTo(0.3 * scale + offset, 0 * scale + offset);     // Middle-right
-  insetShape.lineTo(0.3 * scale + offset, -0.3 * scale + offset);  // Bottom-right
-  insetShape.lineTo(-0.3 * scale + offset, -0.3 * scale + offset); // Bottom-left
-  insetShape.lineTo(-0.3 * scale + offset, -0.1 * scale + offset); // Left edge up
-  insetShape.lineTo(0.1 * scale + offset, -0.1 * scale + offset);  // Middle-bottom
-  insetShape.lineTo(0.1 * scale + offset, 0 * scale + offset);     // Middle-right
-  insetShape.lineTo(-0.3 * scale + offset, 0 * scale + offset);    // Middle-left
-  insetShape.lineTo(-0.3 * scale + offset, 0.3 * scale + offset);  // Back to top-left
-  
-  // Create the inset geometry
-  const insetGeometry = new THREE.ShapeGeometry(insetShape);
-  
-  // Create a darker material for the inset to enhance the 3D effect
-  const insetMaterial = material.clone();
-  insetMaterial.color.setHex(0xaaaaaa); // Slightly darker
-  
-  const insetMesh = new THREE.Mesh(insetGeometry, insetMaterial);
-  insetMesh.position.z = -0.02; // Position slightly in front of the base but still inset
-  letterGroup.add(insetMesh);
-  
-  // Create a third layer for even more depth (optional)
-  const innerShape = new THREE.Shape();
-  const innerScale = 0.6;
-  const innerOffset = (1 - innerScale) * 0.3;
-  
-  // Define an even smaller "S" shape
-  innerShape.moveTo(-0.3 * innerScale + innerOffset, 0.3 * innerScale + innerOffset);
-  innerShape.lineTo(0.3 * innerScale + innerOffset, 0.3 * innerScale + innerOffset);
-  innerShape.lineTo(0.3 * innerScale + innerOffset, 0.1 * innerScale + innerOffset);
-  innerShape.lineTo(-0.1 * innerScale + innerOffset, 0.1 * innerScale + innerOffset);
-  innerShape.lineTo(-0.1 * innerScale + innerOffset, 0 * innerScale + innerOffset);
-  innerShape.lineTo(0.3 * innerScale + innerOffset, 0 * innerScale + innerOffset);
-  innerShape.lineTo(0.3 * innerScale + innerOffset, -0.3 * innerScale + innerOffset);
-  innerShape.lineTo(-0.3 * innerScale + innerOffset, -0.3 * innerScale + innerOffset);
-  innerShape.lineTo(-0.3 * innerScale + innerOffset, -0.1 * innerScale + innerOffset);
-  innerShape.lineTo(0.1 * innerScale + innerOffset, -0.1 * innerScale + innerOffset);
-  innerShape.lineTo(0.1 * innerScale + innerOffset, 0 * innerScale + innerOffset);
-  innerShape.lineTo(-0.3 * innerScale + innerOffset, 0 * innerScale + innerOffset);
-  innerShape.lineTo(-0.3 * innerScale + innerOffset, 0.3 * innerScale + innerOffset);
-  
-  // Create the inner geometry
-  const innerGeometry = new THREE.ShapeGeometry(innerShape);
-  
-  // Create an even darker material for the inner layer
-  const innerMaterial = material.clone();
-  innerMaterial.color.setHex(0x888888); // Even darker
-  
-  const innerMesh = new THREE.Mesh(innerGeometry, innerMaterial);
-  innerMesh.position.z = 0.01; // Position at the deepest level
-  letterGroup.add(innerMesh);
+  // Scale up the entire letter group to make it bigger on the cube face
+  letterGroup.scale.set(1.2, 1.2, 1.0);
   
   // Call the callback with the created letter group
   callback(letterGroup);
