@@ -1,130 +1,124 @@
 /**
- * Utility for creating 3D-looking letter textures and geometries
+ * Utility for creating 3D letter geometries with inward beveling
  */
 
 import * as THREE from "three";
 
 /**
- * Creates a 3D letter "S" with deep beveling effect using advanced texturing
+ * Creates a 3D letter "S" with inward beveling on all sides
  * @param {Function} callback - Callback function that receives the created mesh
  */
 export function create3DLetter(callback) {
-  // Create a box geometry for each face
-  createBeveledLetterMesh(callback);
+  // Create a letter S with inward beveling using a two-layer approach
+  createInwardBeveledLetterS(callback);
 }
 
 /**
- * Creates a mesh with a deeply beveled "S" letter texture
+ * Creates a letter "S" with inward beveling using a two-layer approach
  * @param {Function} callback - Callback function that receives the created mesh
  */
-function createBeveledLetterMesh(callback) {
-  // Create a box geometry with some depth for the letter
-  const geometry = new THREE.BoxGeometry(0.8, 1, 0.2);
-
-  // Create canvas for texture with 3D beveled effect
-  const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 512;
-  const context = canvas.getContext("2d");
-
-  // Fill background with transparent color
-  context.fillStyle = "rgba(0, 0, 0, 0)";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Create a 3D beveled effect for the "S"
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-
-  // Draw the base shape (shadow/depth)
-  context.shadowColor = "rgba(0, 0, 0, 0.9)";
-  context.shadowBlur = 30;
-  context.shadowOffsetX = 15;
-  context.shadowOffsetY = 15;
-  context.fillStyle = "rgba(30, 30, 30, 1.0)";
-  context.font = "bold 320px Arial Black, Impact";
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.fillText("S", centerX, centerY);
-
-  // Draw the middle layer
-  context.shadowColor = "rgba(100, 100, 100, 0.8)";
-  context.shadowBlur = 20;
-  context.shadowOffsetX = 8;
-  context.shadowOffsetY = 8;
-  context.fillStyle = "rgba(120, 120, 120, 1.0)";
-  context.fillText("S", centerX - 4, centerY - 4);
-
-  // Draw the top highlight
-  context.shadowColor = "rgba(255, 255, 255, 0.8)";
-  context.shadowBlur = 15;
-  context.shadowOffsetX = -5;
-  context.shadowOffsetY = -5;
-  context.fillStyle = "rgba(220, 220, 220, 1.0)";
-  context.fillText("S", centerX - 8, centerY - 8);
-
-  // Add edge highlights
-  context.shadowColor = "rgba(255, 255, 255, 0.9)";
-  context.shadowBlur = 5;
-  context.shadowOffsetX = -2;
-  context.shadowOffsetY = -2;
-  context.strokeStyle = "rgba(255, 255, 255, 0.8)";
-  context.lineWidth = 3;
-  context.strokeText("S", centerX - 8, centerY - 8);
-
-  // Reset shadow
-  context.shadowColor = "transparent";
-  context.shadowBlur = 0;
-  context.shadowOffsetX = 0;
-  context.shadowOffsetY = 0;
-
-  // Create normal map for additional 3D effect
-  const normalCanvas = document.createElement("canvas");
-  normalCanvas.width = 512;
-  normalCanvas.height = 512;
-  const normalContext = normalCanvas.getContext("2d");
-
-  // Fill with neutral normal color (128, 128, 255)
-  normalContext.fillStyle = "rgb(128, 128, 255)";
-  normalContext.fillRect(0, 0, normalCanvas.width, normalCanvas.height);
-
-  // Draw the letter shape with normal map colors
-  normalContext.font = "bold 320px Arial Black, Impact";
-  normalContext.textAlign = "center";
-  normalContext.textBaseline = "middle";
-
-  // Top-left to bottom-right gradient for normal map
-  const gradient = normalContext.createLinearGradient(
-    centerX - 150,
-    centerY - 150,
-    centerX + 150,
-    centerY + 150
-  );
-  gradient.addColorStop(0, "rgb(200, 200, 255)"); // Top-left highlight
-  gradient.addColorStop(0.5, "rgb(128, 128, 255)"); // Neutral
-  gradient.addColorStop(1, "rgb(50, 50, 200)"); // Bottom-right shadow
-
-  normalContext.fillStyle = gradient;
-  normalContext.fillText("S", centerX, centerY);
-
-  // Create textures
-  const texture = new THREE.CanvasTexture(canvas);
-  const normalMap = new THREE.CanvasTexture(normalCanvas);
-
-  // Create material with normal mapping for enhanced 3D effect
+function createInwardBeveledLetterS(callback) {
+  // Create a group to hold the letter parts
+  const letterGroup = new THREE.Group();
+  
+  // Create material with metallic finish
   const material = new THREE.MeshStandardMaterial({
-    map: texture,
-    normalMap: normalMap,
-    normalScale: new THREE.Vector2(1, 1),
+    color: 0xdddddd,
     metalness: 0.9,
     roughness: 0.05,
     envMapIntensity: 2.0,
-    transparent: true,
     side: THREE.DoubleSide,
   });
-
-  // Create mesh
-  const letterMesh = new THREE.Mesh(geometry, material);
-
-  // Call the callback with the created mesh
-  callback(letterMesh);
+  
+  // Create a simple shape for the letter "S" (outer shape)
+  const outerShape = new THREE.Shape();
+  
+  // Define a simple "S" shape
+  outerShape.moveTo(-0.3, 0.3);  // Top-left
+  outerShape.lineTo(0.3, 0.3);   // Top-right
+  outerShape.lineTo(0.3, 0.1);   // Right edge down
+  outerShape.lineTo(-0.1, 0.1);  // Middle-top
+  outerShape.lineTo(-0.1, 0);    // Middle-left
+  outerShape.lineTo(0.3, 0);     // Middle-right
+  outerShape.lineTo(0.3, -0.3);  // Bottom-right
+  outerShape.lineTo(-0.3, -0.3); // Bottom-left
+  outerShape.lineTo(-0.3, -0.1); // Left edge up
+  outerShape.lineTo(0.1, -0.1);  // Middle-bottom
+  outerShape.lineTo(0.1, 0);     // Middle-right
+  outerShape.lineTo(-0.3, 0);    // Middle-left
+  outerShape.lineTo(-0.3, 0.3);  // Back to top-left
+  
+  // Create the base (background) for the letter
+  const baseGeometry = new THREE.ShapeGeometry(outerShape);
+  const baseMesh = new THREE.Mesh(baseGeometry, material.clone());
+  baseMesh.position.z = -0.05; // Position slightly behind
+  letterGroup.add(baseMesh);
+  
+  // Create a smaller inset shape for the letter "S" (inner shape)
+  // This will be positioned slightly in front of the base to create the inward bevel effect
+  const insetShape = new THREE.Shape();
+  
+  // Scale factor for the inset (smaller than the outer shape)
+  const scale = 0.8;
+  const offset = (1 - scale) * 0.3; // Offset to keep centered
+  
+  // Define a smaller "S" shape
+  insetShape.moveTo(-0.3 * scale + offset, 0.3 * scale + offset);  // Top-left
+  insetShape.lineTo(0.3 * scale + offset, 0.3 * scale + offset);   // Top-right
+  insetShape.lineTo(0.3 * scale + offset, 0.1 * scale + offset);   // Right edge down
+  insetShape.lineTo(-0.1 * scale + offset, 0.1 * scale + offset);  // Middle-top
+  insetShape.lineTo(-0.1 * scale + offset, 0 * scale + offset);    // Middle-left
+  insetShape.lineTo(0.3 * scale + offset, 0 * scale + offset);     // Middle-right
+  insetShape.lineTo(0.3 * scale + offset, -0.3 * scale + offset);  // Bottom-right
+  insetShape.lineTo(-0.3 * scale + offset, -0.3 * scale + offset); // Bottom-left
+  insetShape.lineTo(-0.3 * scale + offset, -0.1 * scale + offset); // Left edge up
+  insetShape.lineTo(0.1 * scale + offset, -0.1 * scale + offset);  // Middle-bottom
+  insetShape.lineTo(0.1 * scale + offset, 0 * scale + offset);     // Middle-right
+  insetShape.lineTo(-0.3 * scale + offset, 0 * scale + offset);    // Middle-left
+  insetShape.lineTo(-0.3 * scale + offset, 0.3 * scale + offset);  // Back to top-left
+  
+  // Create the inset geometry
+  const insetGeometry = new THREE.ShapeGeometry(insetShape);
+  
+  // Create a darker material for the inset to enhance the 3D effect
+  const insetMaterial = material.clone();
+  insetMaterial.color.setHex(0xaaaaaa); // Slightly darker
+  
+  const insetMesh = new THREE.Mesh(insetGeometry, insetMaterial);
+  insetMesh.position.z = -0.02; // Position slightly in front of the base but still inset
+  letterGroup.add(insetMesh);
+  
+  // Create a third layer for even more depth (optional)
+  const innerShape = new THREE.Shape();
+  const innerScale = 0.6;
+  const innerOffset = (1 - innerScale) * 0.3;
+  
+  // Define an even smaller "S" shape
+  innerShape.moveTo(-0.3 * innerScale + innerOffset, 0.3 * innerScale + innerOffset);
+  innerShape.lineTo(0.3 * innerScale + innerOffset, 0.3 * innerScale + innerOffset);
+  innerShape.lineTo(0.3 * innerScale + innerOffset, 0.1 * innerScale + innerOffset);
+  innerShape.lineTo(-0.1 * innerScale + innerOffset, 0.1 * innerScale + innerOffset);
+  innerShape.lineTo(-0.1 * innerScale + innerOffset, 0 * innerScale + innerOffset);
+  innerShape.lineTo(0.3 * innerScale + innerOffset, 0 * innerScale + innerOffset);
+  innerShape.lineTo(0.3 * innerScale + innerOffset, -0.3 * innerScale + innerOffset);
+  innerShape.lineTo(-0.3 * innerScale + innerOffset, -0.3 * innerScale + innerOffset);
+  innerShape.lineTo(-0.3 * innerScale + innerOffset, -0.1 * innerScale + innerOffset);
+  innerShape.lineTo(0.1 * innerScale + innerOffset, -0.1 * innerScale + innerOffset);
+  innerShape.lineTo(0.1 * innerScale + innerOffset, 0 * innerScale + innerOffset);
+  innerShape.lineTo(-0.3 * innerScale + innerOffset, 0 * innerScale + innerOffset);
+  innerShape.lineTo(-0.3 * innerScale + innerOffset, 0.3 * innerScale + innerOffset);
+  
+  // Create the inner geometry
+  const innerGeometry = new THREE.ShapeGeometry(innerShape);
+  
+  // Create an even darker material for the inner layer
+  const innerMaterial = material.clone();
+  innerMaterial.color.setHex(0x888888); // Even darker
+  
+  const innerMesh = new THREE.Mesh(innerGeometry, innerMaterial);
+  innerMesh.position.z = 0.01; // Position at the deepest level
+  letterGroup.add(innerMesh);
+  
+  // Call the callback with the created letter group
+  callback(letterGroup);
 }
