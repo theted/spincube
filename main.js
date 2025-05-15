@@ -1,5 +1,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 
 // Import constants
 import * as CONST from "./constants.js";
@@ -65,6 +68,8 @@ import {
   blurFragmentShader,
   cubeVertexShader,
   cubeFragmentShader,
+  godraysVertexShader,
+  godraysFragmentShader,
 } from "./shaders/index.js";
 
 // Import components
@@ -102,6 +107,7 @@ const state = {
   scene: null,
   camera: null,
   renderer: null,
+  composer: null, // Added for post-processing
   cube: null,
   controls: null,
   clock: new THREE.Clock(),
@@ -118,6 +124,7 @@ const state = {
   targetUserSpinOffset: new THREE.Vector2(0, 0),
   currentUserSpinOffset: new THREE.Vector2(0, 0),
   currentUserSpinVelocity: new THREE.Vector2(0, 0),
+  latestThrowVelocity: new THREE.Vector2(0, 0), // To store velocity from the last drag movement
 
   // Bounce animation state
   isBouncing: false,
@@ -192,6 +199,35 @@ function init() {
   // Create cube
   state.cube = createCube(state.scene);
 
+  // Setup EffectComposer
+  state.composer = new EffectComposer(state.renderer);
+  const renderPass = new RenderPass(state.scene, state.camera);
+  state.composer.addPass(renderPass);
+
+  if (CONST.ENABLE_GOD_RAYS) {
+    // God Rays Pass
+    const godraysShaderDef = {
+      uniforms: {
+        tDiffuse: { value: null }, // Will be set by EffectComposer
+        u_lightPositionScreen: { value: new THREE.Vector2(0.5, 0.5) }, // Center of screen
+        u_exposure: { value: 0.34 },
+        u_decay: { value: 0.95 },
+        u_density: { value: 0.96 },
+        u_weight: { value: 0.4 },
+        u_samples: { value: 100 },
+      },
+      vertexShader: godraysVertexShader,
+      fragmentShader: godraysFragmentShader,
+    };
+    const godraysPass = new ShaderPass(godraysShaderDef);
+    godraysPass.material.blending = THREE.AdditiveBlending; // Additive blending for rays
+    godraysPass.renderToScreen = true; // This is the last pass rendering to screen
+    state.composer.addPass(godraysPass);
+  } else {
+    // If god rays are not enabled, the renderPass should render to screen
+    renderPass.renderToScreen = true;
+  }
+
   // Create debug UI if enabled
   const debugUI = createDebugUI(state);
   state.debugUI = debugUI;
@@ -203,7 +239,11 @@ function init() {
     onPointerMove: createPointerMoveHandler(state),
     onPointerUp: createPointerUpHandler(state, state.clock),
     onWheel: createWheelHandler(state),
-    onWindowResize: createWindowResizeHandler(state.camera, state.renderer),
+    onWindowResize: createWindowResizeHandler(
+      state.camera,
+      state.renderer,
+      state.composer
+    ),
   });
 }
 
@@ -324,8 +364,8 @@ function animate() {
     state.debugUI.update();
   }
 
-  // Render the scene
-  state.renderer.render(state.scene, state.camera);
+  // Render the scene via composer
+  state.composer.render();
 }
 
 // Initialize and start animation

@@ -14,6 +14,8 @@ export const USE_GLASS_MATERIAL = false; // Toggle between glass (true) and meta
 export const MATERIAL_COLOR = 0xffffff; // White color to maximize reflectivity
 export const METALNESS = 1.0;
 export const ROUGHNESS = 0.001; // Ultra-low roughness for maximum shininess
+export const EMISSIVE_COLOR = 0xffffff; // Color of the glow
+export const EMISSIVE_INTENSITY = 0.15; // Intensity of the glow
 export const ENV_MAP_INTENSITY = 3.0; // Significantly increased intensity for stronger reflections
 export const CLEARCOAT = 1.0; // Add clearcoat for extra shine
 export const CLEARCOAT_ROUGHNESS = 0.001; // Ultra-smooth clearcoat
@@ -39,6 +41,7 @@ export const K_SPRING = 0.12; // Increased springiness for smoother animations
 export const K_DAMPING = 0.3; // Increased damping for smoother deceleration
 export const MOUSE_DRAG_SENSITIVITY = 0.002; // Significantly reduced sensitivity when picking up
 export const TARGET_OFFSET_DAMPING_FACTOR = 0.95; // Increased for smoother transitions
+export const INERTIA_DAMPING_FACTOR = 0.95; // For thrown cube spin decay
 export const CUBE_INTERACTION_PARALLAX_FACTOR = 0.01; // Reduced parallax effect
 export const THROW_VELOCITY_FACTOR = 0.4; // Reduced for more controlled throwing
 
@@ -61,3 +64,6 @@ export const CHECKER_SCALE = 20.0; // How many checkers across
 export const WARP_AMOUNT = 0.05; // Strength of warping
 export const WARP_FREQUENCY = 5.0; // Spatial frequency of warp pattern
 export const WARP_SPEED = 0.1; // How fast the warp animates
+
+// --- Post-processing constants ---
+export const ENABLE_GOD_RAYS = true; // Toggle for god rays effect

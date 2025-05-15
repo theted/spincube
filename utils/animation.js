@@ -49,24 +49,14 @@ export function updateBounceAnimation({
         Math.sin(progress * Math.PI * 0.5) // Use half sine wave for smooth in
       );
     } else {
-      // Only bounce out if mouse is not down
+      // Bounce out: Only if mouse is not down
       if (!mouseDown) {
-        // Bounce out: Start at current scale, go to 1.0 with a slight undershoot
+        // Smoothly interpolate from current (likely max) scale to 1.0
         bounceScale = THREE.MathUtils.lerp(
-          currentBounceScale,
-          CONST.BOUNCE_MIN_SCALE,
-          Math.sin(progress * Math.PI * 0.5)
+          CONST.BOUNCE_MAX_SCALE, // Assuming it starts from max scale after mouse up
+          1.0,
+          Math.sin(progress * Math.PI * 0.5) // Use half sine wave for smooth out
         );
-
-        // Then lerp back to 1.0 for the second half
-        if (progress > 0.5) {
-          const secondHalfProgress = (progress - 0.5) * 2; // 0 to 1 for second half
-          bounceScale = THREE.MathUtils.lerp(
-            CONST.BOUNCE_MIN_SCALE,
-            1.0,
-            Math.sin(secondHalfProgress * Math.PI * 0.5)
-          );
-        }
       } else {
         // If mouse is still down, maintain the expanded state
         bounceScale = CONST.BOUNCE_MAX_SCALE;
@@ -93,9 +83,6 @@ export function updateBounceAnimation({
         cubeMesh.material.color.copy(currentColor);
       }
     }
-
-    // Add a slight rotation effect during bounce
-    cube.rotation.z = Math.sin(progress * Math.PI * 2) * 0.1;
 
     // Calculate skybox bounce effect (inverse of cube scale for contrast)
     const skyboxBounceAmount = (bounceScale - 1.0) * 0.5; // Significantly increased effect

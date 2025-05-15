@@ -70,12 +70,18 @@ export function createPointerMoveHandler(state) {
     };
 
     // Calculate velocity for "throwing" effect
-    const throwFactor = calculateThrowFactor(deltaMove);
+    const throwFactor = calculateThrowFactor(deltaMove); // This is more of a speed magnitude
 
-    state.targetUserSpinOffset.y +=
-      deltaMove.x * CONST.MOUSE_DRAG_SENSITIVITY * (1 + throwFactor * 0.1);
-    state.targetUserSpinOffset.x +=
-      deltaMove.y * CONST.MOUSE_DRAG_SENSITIVITY * (1 + throwFactor * 0.1);
+    // Update target spin offset for the spring system during drag
+    state.targetUserSpinOffset.y += deltaMove.x * CONST.MOUSE_DRAG_SENSITIVITY; // Simpler update for target
+    state.targetUserSpinOffset.x += deltaMove.y * CONST.MOUSE_DRAG_SENSITIVITY;
+
+    // Store the potential throw velocity, scaled appropriately
+    // This captures the velocity of the drag movement itself
+    state.latestThrowVelocity.y =
+      deltaMove.x * CONST.MOUSE_DRAG_SENSITIVITY * CONST.THROW_VELOCITY_FACTOR;
+    state.latestThrowVelocity.x =
+      deltaMove.y * CONST.MOUSE_DRAG_SENSITIVITY * CONST.THROW_VELOCITY_FACTOR;
 
     state.previousMousePosition.x = event.clientX;
     state.previousMousePosition.y = event.clientY;
@@ -90,6 +96,16 @@ export function createPointerMoveHandler(state) {
  */
 export function createPointerUpHandler(state, clock) {
   return (event) => {
+    if (state.isDragging) {
+      // Only apply throw if a drag was in progress
+      // Apply the last calculated throw velocity to the current spin velocity
+      state.currentUserSpinVelocity.x += state.latestThrowVelocity.x;
+      state.currentUserSpinVelocity.y += state.latestThrowVelocity.y;
+
+      // Reset latestThrowVelocity for the next interaction
+      state.latestThrowVelocity.set(0, 0);
+    }
+
     state.isDragging = false;
     state.mouseDown = false;
 
@@ -140,12 +156,14 @@ export function createWheelHandler(state) {
  * Creates a window resize handler
  * @param {THREE.PerspectiveCamera} camera - The camera
  * @param {THREE.WebGLRenderer} renderer - The renderer
+ * @param {THREE.EffectComposer} composer - The effect composer
  * @returns {Function} The resize handler
  */
-export function createWindowResizeHandler(camera, renderer) {
+export function createWindowResizeHandler(camera, renderer, composer) {
   return () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    composer.setSize(window.innerWidth, window.innerHeight);
   };
 }

@@ -31,33 +31,36 @@ export function createLetterTexture() {
   context.textAlign = "center";
   context.textBaseline = "middle";
 
-  // Create shadow/depth effect for bezeling inward
-  // Outer shadow (darker edge)
-  context.shadowColor = "rgba(0, 0, 0, 0.8)";
-  context.shadowBlur = 15;
-  context.shadowOffsetX = 4;
-  context.shadowOffsetY = 4;
-  context.fillStyle = "rgba(180, 180, 180, 0.9)"; // Slightly darker for the outer edge
-  context.fillText("S", centerX, centerY);
+  // Create an inward beveled 3D effect for the "S"
+  const letterColor = "rgb(220, 220, 220)"; // Main color of the letter face
+  const shadowColor = "rgba(0, 0, 0, 0.5)"; // Darker edge for the bevel (simulates shadow on one side of the indent)
+  const highlightColor = "rgba(255, 255, 255, 0.6)"; // Lighter edge for the bevel (simulates highlight on the other side)
+  const bevelOffset = 3; // Controls the width of the bevel
 
-  // Inner highlight (lighter center to create depth)
-  context.shadowColor = "rgba(255, 255, 255, 0.9)";
-  context.shadowBlur = 8;
-  context.shadowOffsetX = -3;
-  context.shadowOffsetY = -3;
-  context.fillStyle = "rgba(240, 240, 240, 0.95)"; // Brighter for the inner part
-  context.fillText("S", centerX - 1, centerY - 1); // Slight offset for depth
-
-  // Reset shadow
+  // Ensure no global shadows interfere with the bevel effect
   context.shadowColor = "transparent";
   context.shadowBlur = 0;
   context.shadowOffsetX = 0;
   context.shadowOffsetY = 0;
 
-  // Add a subtle inward bevel edge
-  context.strokeStyle = "rgba(50, 50, 50, 0.7)";
-  context.lineWidth = 2;
-  context.strokeText("S", centerX, centerY);
+  // Draw the highlight part of the bevel (e.g., appears on bottom-right for a light source from top-left)
+  context.fillStyle = highlightColor;
+  context.fillText("S", centerX + bevelOffset, centerY + bevelOffset);
+
+  // Draw the shadow part of the bevel (e.g., appears on top-left)
+  context.fillStyle = shadowColor;
+  context.fillText("S", centerX - bevelOffset, centerY - bevelOffset);
+
+  // Draw the main letter face
+  context.fillStyle = letterColor;
+  context.fillText("S", centerX, centerY);
+
+  // Reset shadow properties (good practice, though done above for this block specifically)
+  // This ensures subsequent drawing operations on the canvas are not affected by these settings.
+  context.shadowColor = "transparent";
+  context.shadowBlur = 0;
+  context.shadowOffsetX = 0;
+  context.shadowOffsetY = 0;
 
   // Create a texture from the canvas
   const texture = new THREE.CanvasTexture(canvas);

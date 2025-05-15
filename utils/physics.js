@@ -16,36 +16,46 @@ export function updateSpringPhysics({
   currentUserSpinVelocity,
   isDragging,
 }) {
-  // Only apply damping when not dragging - this allows the cube to keep spinning when "thrown"
-  if (!isDragging) {
-    // Apply damping to the target offset (slower decay for more "throw" effect)
-    targetUserSpinOffset.x *= CONST.TARGET_OFFSET_DAMPING_FACTOR;
-    targetUserSpinOffset.y *= CONST.TARGET_OFFSET_DAMPING_FACTOR;
+  if (isDragging) {
+    // While dragging, the spring pulls the current offset towards the target (mouse)
+    // Calculate spring forces
+    let forceX =
+      (targetUserSpinOffset.x - currentUserSpinOffset.x) * CONST.K_SPRING;
+    let forceY =
+      (targetUserSpinOffset.y - currentUserSpinOffset.y) * CONST.K_SPRING;
 
-    const targetEpsilon = 0.00001;
-    if (Math.abs(targetUserSpinOffset.x) < targetEpsilon)
-      targetUserSpinOffset.x = 0;
-    if (Math.abs(targetUserSpinOffset.y) < targetEpsilon)
-      targetUserSpinOffset.y = 0;
+    // Calculate damping forces (applied to velocity)
+    let dampingForceX = currentUserSpinVelocity.x * CONST.K_DAMPING;
+    let dampingForceY = currentUserSpinVelocity.y * CONST.K_DAMPING;
+
+    // Update velocity based on forces
+    currentUserSpinVelocity.x += forceX - dampingForceX;
+    currentUserSpinVelocity.y += forceY - dampingForceY;
+
+    // Update position based on velocity
+    currentUserSpinOffset.x += currentUserSpinVelocity.x;
+    currentUserSpinOffset.y += currentUserSpinVelocity.y;
+  } else {
+    // When not dragging (thrown), apply inertia
+    // The cube continues to spin based on its current velocity, which gradually dampens.
+    currentUserSpinOffset.x += currentUserSpinVelocity.x;
+    currentUserSpinOffset.y += currentUserSpinVelocity.y;
+
+    // Damp the velocity directly
+    currentUserSpinVelocity.x *= CONST.INERTIA_DAMPING_FACTOR;
+    currentUserSpinVelocity.y *= CONST.INERTIA_DAMPING_FACTOR;
+
+    // The target offset should follow the current offset to prevent the spring from re-engaging
+    targetUserSpinOffset.x = currentUserSpinOffset.x;
+    targetUserSpinOffset.y = currentUserSpinOffset.y;
+
+    // Clamp very small velocities to zero to stop movement eventually
+    const velocityEpsilon = 0.00001;
+    if (Math.abs(currentUserSpinVelocity.x) < velocityEpsilon)
+      currentUserSpinVelocity.x = 0;
+    if (Math.abs(currentUserSpinVelocity.y) < velocityEpsilon)
+      currentUserSpinVelocity.y = 0;
   }
-
-  // Calculate spring forces
-  let forceX =
-    (targetUserSpinOffset.x - currentUserSpinOffset.x) * CONST.K_SPRING;
-  let forceY =
-    (targetUserSpinOffset.y - currentUserSpinOffset.y) * CONST.K_SPRING;
-
-  // Calculate damping forces
-  let dampingForceX = currentUserSpinVelocity.x * CONST.K_DAMPING;
-  let dampingForceY = currentUserSpinVelocity.y * CONST.K_DAMPING;
-
-  // Update velocity based on forces
-  currentUserSpinVelocity.x += forceX - dampingForceX;
-  currentUserSpinVelocity.y += forceY - dampingForceY;
-
-  // Update position based on velocity
-  currentUserSpinOffset.x += currentUserSpinVelocity.x;
-  currentUserSpinOffset.y += currentUserSpinVelocity.y;
 
   return {
     targetUserSpinOffset,

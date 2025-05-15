@@ -33,7 +33,8 @@ export function createDebugUI(state) {
   container.style.maxHeight = "80vh";
   container.style.overflowY = "auto";
   container.style.transition = "transform 0.3s ease";
-  container.style.transform = "translateX(310px)";
+  // Start visible if DEBUG is true
+  container.style.transform = "translateX(0)";
 
   // Create header
   const header = document.createElement("div");
@@ -63,7 +64,8 @@ export function createDebugUI(state) {
   header.appendChild(toggleButton);
 
   // Toggle panel visibility
-  let isVisible = false;
+  let isVisible = true; // Start visible
+  toggleButton.textContent = ">>"; // Reflect initial visible state
   toggleButton.addEventListener("click", () => {
     isVisible = !isVisible;
     container.style.transform = isVisible

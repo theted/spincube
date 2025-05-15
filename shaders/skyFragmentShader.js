@@ -59,20 +59,8 @@ export const skyFragmentShader = `
             float horizonFactor = smoothstep(0.0, 0.3, abs(viewDir.y)); // Stronger effect near horizon
             finalColor = mix(finalColor, vec3(0.4, 0.4, 0.6) * 0.8, horizonFactor * 0.4);
         } else {
-            // Much darker gradient background
-            // Create a simple gradient from top to bottom with much darker colors
-            vec3 topColor = vec3(0.03, 0.04, 0.08); // Very dark blue at top
-            vec3 bottomColor = vec3(0.01, 0.01, 0.03); // Almost black at bottom
-            
-            // Subtle noise for texture
-            float noise = snoise(vec3(currentUv * 3.0, u_time * 0.05)) * 0.02;
-            
-            // Mix colors based on Y coordinate
-            finalColor = mix(bottomColor, topColor, currentUv.y + noise);
-            
-            // Add a stronger vignette effect for more dramatic darkening at edges
-            float vignette = 1.0 - smoothstep(0.3, 1.2, length(currentUv - vec2(0.5)));
-            finalColor *= vignette * 0.85 + 0.15;
+            // Dark gray background
+            finalColor = vec3(0.12, 0.12, 0.12); // Solid dark gray
         }
 
         gl_FragColor = vec4(finalColor, 1.0);

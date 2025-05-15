@@ -121,6 +121,8 @@ function createMetallicMaterial() {
     color: CONST.MATERIAL_COLOR,
     metalness: CONST.METALNESS,
     roughness: CONST.ROUGHNESS,
+    emissive: new THREE.Color(CONST.EMISSIVE_COLOR),
+    emissiveIntensity: CONST.EMISSIVE_INTENSITY,
     envMapIntensity: CONST.ENV_MAP_INTENSITY,
     clearcoat: CONST.CLEARCOAT,
     clearcoatRoughness: CONST.CLEARCOAT_ROUGHNESS,
