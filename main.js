@@ -16,24 +16,26 @@ const cube = mountSpinCube(document.body, {
   onPress: () => hint.dismiss(),
 });
 
-// Debug panel: ?debug in the URL, or press "d" during development
-let debugPanel = null;
-let debugVisible = false;
-async function toggleDebugPanel() {
-  debugVisible = !debugVisible;
-  if (!debugPanel) {
-    const { createDebugPanel } = await import("./components/debugPanel.js");
-    debugPanel = createDebugPanel(cube.applySettings);
+// Debug panel: ?debug in the URL, or press "d" during development. Once it's
+// open, "d" hides and shows it in any build.
+let debugPanel = null; // A promise of the panel, loaded on first use
+function toggleDebugPanel() {
+  if (debugPanel) {
+    debugPanel.then((panel) => panel.toggle());
+    return;
   }
-  debugPanel.show(debugVisible);
+  debugPanel = import("./components/debugPanel.js").then(({ createDebugPanel }) =>
+    createDebugPanel(cube.applySettings)
+  );
 }
-if (new URLSearchParams(window.location.search).has("debug")) {
-  toggleDebugPanel();
-}
-if (import.meta.env.DEV) {
+const debugRequested = new URLSearchParams(window.location.search).has("debug");
+if (debugRequested) toggleDebugPanel();
+if (import.meta.env.DEV || debugRequested) {
   window.addEventListener("keydown", (event) => {
     if (event.key === "d" && event.target === document.body) toggleDebugPanel();
   });
+}
+if (import.meta.env.DEV) {
   // Hook for automated screenshots and poking at the state from the console
   window.spincube = cube;
 }
