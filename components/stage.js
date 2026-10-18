@@ -32,6 +32,7 @@ export function createStage({ transparent = false } = {}) {
     const pixelRatio = Math.min(window.devicePixelRatio, RENDER.maxPixelRatio);
     renderer.setPixelRatio(pixelRatio);
     renderer.setSize(width, height, false);
+    renderer.transmissionResolutionScale = RENDER.transmissionScale;
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     return pixelRatio;

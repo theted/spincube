@@ -66,10 +66,24 @@ cube.dispose();
 
 The canvas fills `element` and follows its size. The defaults suit a cube
 inside a page:
+- only a press on the cube itself charges or spins it, and the cursor shows
+  that;
 - the wheel and Space are left alone;
-- `touch-action: pan-y` lets vertical swipes scroll the page;
+- vertical swipes still scroll the page and pinches still zoom it;
 - a touch the browser takes over for scrolling neither pulses nor throws;
 - rendering pauses while the cube is off screen or the tab is hidden.
+
+To use the scene as a section background with the cube off to one side,
+pass `background: "scene"` and a `layout`: `{ x: 0.74, y: 0.47 }` puts the
+cube at those fractions of the canvas. The camera's view is shifted
+off-axis rather than turned, so the backdrop's glow, the charge pinch and
+the ripple stay centred on the cube. `layout` can be a function of the
+canvas size, for breakpoints. If page content sits on top of the canvas,
+pass that section as `pointerTarget`: a press that lands on the cube then
+spins it even through the text, and every other press reaches the page.
+sundbergsolutions.se's hero works this way.
+For large canvases, `overrides: { RENDER: { maxPixelRatio: 1.25,
+transmissionScale: 0.6 } }` keeps the cost down.
 
 `index.d.ts` lists every option. `overrides` change the module-level settings
 in `constants.js`, so mount one cube per page.

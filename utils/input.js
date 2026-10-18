@@ -6,12 +6,22 @@ import { Vector2 } from "three";
 
 const WHEEL_LINE_HEIGHT = 16; // Pixels per line for wheel events in line mode
 
+// Cursor classes. They override descendants' cursors too, so the grab hand
+// shows over the cube even where page text lies on top of it
+const CURSOR_STYLE_ID = "spincube-cursor";
+const CURSOR_CSS = `
+  .spincube-grab, .spincube-grab * { cursor: grab !important; }
+  .spincube-grabbing, .spincube-grabbing * { cursor: grabbing !important; }
+`;
+
 /**
  * @param {HTMLElement} element - The canvas
  * @param {Object} options
+ * @param {HTMLElement} [options.target] - Element whose pointer events drive the cube; defaults to the canvas
  * @param {number} options.dragThreshold - Pixels moved before a press becomes a drag
  * @param {boolean} [options.wheel] - Capture the wheel for zooming
  * @param {boolean} [options.keyboard] - Space presses and releases like a click
+ * @param {Function} [options.canPress] - Whether a pointer event is over something pressable
  * @param {Function} options.onPress - A press started (pointer or Space)
  * @param {Function} options.onDragStart - A press turned into a drag
  * @param {Function} options.onRelease - Called with { wasDrag, cancelled }
@@ -19,7 +29,16 @@ const WHEEL_LINE_HEIGHT = 16; // Pixels per line for wheel events in line mode
  */
 export function createInput(
   element,
-  { dragThreshold, wheel = false, keyboard = false, onPress, onDragStart, onRelease }
+  {
+    target = element,
+    dragThreshold,
+    wheel = false,
+    keyboard = false,
+    canPress = () => true,
+    onPress,
+    onDragStart,
+    onRelease,
+  }
 ) {
   const state = {
     pointer: new Vector2(), // -1..1 across the window, for camera parallax
@@ -44,9 +63,15 @@ export function createInput(
     );
   };
 
+  ensureCursorStyle();
+  const setCursor = (cursor) => {
+    target.classList.toggle("spincube-grab", cursor === "grab");
+    target.classList.toggle("spincube-grabbing", cursor === "grabbing");
+  };
+
   const setDragging = (dragging) => {
     state.isDragging = dragging;
-    element.style.cursor = dragging ? "grabbing" : "grab";
+    setCursor(dragging ? "grabbing" : "grab");
   };
 
   // A cancelled press (the browser took the touch over to scroll the page)
@@ -58,11 +83,14 @@ export function createInput(
     onRelease({ wasDrag, cancelled });
   };
 
-  const elementHandlers = {
+  // Listened for on the target in the capture phase, so a press on the cube
+  // wins over whatever page content lies on top of it
+  const targetHandlers = {
     pointerdown(event) {
-      if (state.isDown) return; // Ignore extra fingers
+      if (state.isDown || !canPress(event)) return; // Ignore extra fingers
+      event.preventDefault(); // No text selection or focus change
       activePointer = event.pointerId;
-      element.setPointerCapture(event.pointerId);
+      target.setPointerCapture(event.pointerId);
       downX = lastX = event.clientX;
       downY = lastY = event.clientY;
       dragX = dragY = 0;
@@ -71,7 +99,11 @@ export function createInput(
       onPress();
     },
     pointermove(event) {
-      if (!state.isDown || event.pointerId !== activePointer) return;
+      if (!state.isDown) {
+        setCursor(canPress(event) ? "grab" : null);
+        return;
+      }
+      if (event.pointerId !== activePointer) return;
       if (
         !state.isDragging &&
         Math.hypot(event.clientX - downX, event.clientY - downY) > dragThreshold
@@ -101,7 +133,7 @@ export function createInput(
     },
   };
   if (wheel) {
-    elementHandlers.wheel = (event) => {
+    targetHandlers.wheel = (event) => {
       event.preventDefault();
       wheelDelta +=
         event.deltaMode === WheelEvent.DOM_DELTA_LINE
@@ -135,14 +167,16 @@ export function createInput(
     };
   }
 
-  const listen = (target, handlers, method) => {
+  const listen = (eventTarget, handlers, method) => {
     for (const [type, handler] of Object.entries(handlers)) {
-      target[method](type, handler, { passive: type !== "wheel" && type !== "contextmenu" });
+      eventTarget[method](type, handler, {
+        capture: eventTarget === target,
+        passive: !["pointerdown", "wheel", "contextmenu"].includes(type),
+      });
     }
   };
-  listen(element, elementHandlers, "addEventListener");
+  listen(target, targetHandlers, "addEventListener");
   listen(window, windowHandlers, "addEventListener");
-  element.style.cursor = "grab";
 
   return {
     state,
@@ -159,10 +193,19 @@ export function createInput(
       return value;
     },
     dispose() {
-      listen(element, elementHandlers, "removeEventListener");
+      listen(target, targetHandlers, "removeEventListener");
       listen(window, windowHandlers, "removeEventListener");
+      setCursor(null);
     },
   };
+}
+
+function ensureCursorStyle() {
+  if (document.getElementById(CURSOR_STYLE_ID)) return;
+  const style = document.createElement("style");
+  style.id = CURSOR_STYLE_ID;
+  style.textContent = CURSOR_CSS;
+  document.head.append(style);
 }
 
 function isTyping(event) {

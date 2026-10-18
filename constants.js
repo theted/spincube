@@ -16,6 +16,7 @@ export const RENDER = {
   maxPixelRatio: 2,
   exposure: 1.05,
   msaaSamples: 4,
+  transmissionScale: 1, // Resolution of the buffer the glass refracts; lower is cheaper
 };
 
 // --- Glass cube ---

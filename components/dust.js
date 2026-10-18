@@ -71,10 +71,11 @@ export function createDust(reducedMotion) {
    * Keeps point sizes in world units.
    * @param {number} bufferHeight - Drawing buffer height in pixels
    * @param {number} fov - Vertical field of view in degrees
+   * @param {number} [zoom] - Camera zoom
    */
-  const resize = (bufferHeight, fov) => {
+  const resize = (bufferHeight, fov, zoom = 1) => {
     const halfHeight = Math.tan(THREE.MathUtils.degToRad(fov / 2));
-    uniforms.u_pixelScale.value = bufferHeight / (2 * halfHeight);
+    uniforms.u_pixelScale.value = (bufferHeight * zoom) / (2 * halfHeight);
   };
 
   return { points, update, resize, applySettings };

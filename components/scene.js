@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { CAMERA, PRESS, SPIN } from "../constants.js";
+import { CAMERA, CUBE_SIZE, PRESS, SPIN } from "../constants.js";
 import { applyOverrides } from "../utils/settings.js";
 import { createInput } from "../utils/input.js";
 import {
@@ -28,7 +28,10 @@ const DEFAULTS = {
   background: "transparent",
   wheelZoom: false,
   keyboard: false,
-  touchAction: "pan-y",
+  touchAction: "pan-y pinch-zoom",
+  pressAnywhere: false,
+  pointerTarget: null,
+  layout: null,
   autoPause: true,
   overrides: {},
   onPress: null,
@@ -43,7 +46,10 @@ const DEFAULTS = {
  * @param {"scene"|"transparent"} [options.background] - Draw the light-line backdrop, or leave the canvas see-through
  * @param {boolean} [options.wheelZoom] - Capture the wheel to zoom
  * @param {boolean} [options.keyboard] - Hold Space to charge
- * @param {string} [options.touchAction] - CSS touch-action for the canvas; "pan-y" lets vertical swipes scroll the page
+ * @param {string} [options.touchAction] - CSS touch-action for the canvas; the default lets vertical swipes scroll and pinches zoom the page
+ * @param {boolean} [options.pressAnywhere] - Any press on the canvas charges the cube, not just one on the cube
+ * @param {HTMLElement} [options.pointerTarget] - Element to take presses from, e.g. a section with text over the canvas; the cube wins wherever it is. Defaults to the canvas
+ * @param {Object|Function} [options.layout] - Where the cube sits: { x, y, zoom }, x and y as fractions of the canvas, or a function of (width, height) returning that
  * @param {boolean} [options.autoPause] - Stop rendering while off screen or in a hidden tab
  * @param {Object} [options.overrides] - Partial setting groups from constants.js, e.g. { CAMERA: { distance: 5 } }
  * @param {Function} [options.onPress] - Called when a press starts
@@ -90,9 +96,11 @@ export function mountSpinCube(container, options = {}) {
   const motion = createMotion({ reducedMotion });
 
   const input = createInput(canvas, {
+    target: opts.pointerTarget ?? canvas,
     dragThreshold: PRESS.dragThreshold,
     wheel: opts.wheelZoom,
     keyboard: opts.keyboard,
+    canPress: isOverCube,
     onPress: () => {
       pressMotion(motion);
       opts.onPress?.();
@@ -109,8 +117,33 @@ export function mountSpinCube(container, options = {}) {
     const width = Math.max(1, container.clientWidth);
     const height = Math.max(1, container.clientHeight);
     const pixelRatio = resizeStage(width, height);
+    const layout =
+      (typeof opts.layout === "function" ? opts.layout(width, height) : opts.layout) ?? {};
+    const { x = 0.5, y = 0.5, zoom = 1 } = layout;
+    camera.zoom = zoom;
+    // An off-axis projection puts the cube (and the backdrop's centre) at
+    // (x, y) of the canvas without turning the camera
+    camera.setViewOffset(width, height, width * (0.5 - x), height * (0.5 - y), width, height);
     post.resize(width, height, pixelRatio);
-    dust.resize(height * pixelRatio, camera.fov);
+    dust.resize(height * pixelRatio, camera.fov, zoom);
+  }
+
+  // Whether a pointer event lands on the cube: a sphere a little larger than
+  // its faces, so a press near an edge still counts
+  const raycaster = new THREE.Raycaster();
+  const hitSphere = new THREE.Sphere();
+  const pointerNdc = new THREE.Vector2();
+  function isOverCube(event) {
+    if (opts.pressAnywhere) return true;
+    const rect = canvas.getBoundingClientRect();
+    pointerNdc.set(
+      ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      -((event.clientY - rect.top) / rect.height) * 2 + 1
+    );
+    raycaster.setFromCamera(pointerNdc, camera);
+    spinCube.root.getWorldPosition(hitSphere.center);
+    hitSphere.radius = CUBE_SIZE * 0.75 * spinCube.root.scale.x;
+    return raycaster.ray.intersectsSphere(hitSphere);
   }
 
   function applySettings() {
