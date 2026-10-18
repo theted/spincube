@@ -31,28 +31,34 @@ SpinCube is an interactive 3D visualization featuring a spinning cube with dynam
 3. **Configuration**
 
    - All constants and configurable parameters MUST be in `constants.js`
-   - Group related constants together with comments
+   - Group related constants together with comments, as plain objects
+     (e.g. `GLASS`, `BACKDROP`) so the debug panel can tweak them live
    - Use UPPER_CASE for constant names
+   - Never assign to an imported binding; mutate properties of the exported
+     objects instead (ES module imports are read-only)
    - Provide descriptive comments for non-obvious constants
 
 4. **File Structure**
    ```
    spincube/
    ├── index.html          # Main HTML entry point
-   ├── main.js             # Core application logic
+   ├── main.js             # Wiring and the animation loop
    ├── constants.js        # All configurable parameters
-   ├── utils/              # Utility functions
-   │   ├── physics.js      # Physics calculations
-   │   ├── animation.js    # Animation helpers
+   ├── assets/             # Embedded data (the S glyph)
+   ├── utils/              # Pure logic, unit tested
+   │   ├── spring.js       # Damped springs and smoothing
+   │   ├── rotation.js     # Quaternion spin helpers
+   │   ├── motion.js       # The cube's motion model
+   │   └── input.js        # Pointer, wheel and keyboard input
+   ├── components/         # Scene pieces
+   │   ├── spinCube.js     # Glass cube plus the glowing S
+   │   ├── backdrop.js     # Shader-drawn backdrop sphere
    │   └── ...
-   ├── components/         # Reusable components
-   │   ├── cube.js         # Cube creation and handling
-   │   ├── environment.js  # Environment setup
+   ├── shaders/            # All shader code
+   │   ├── backdropVertexShader.js
+   │   ├── backdropFragmentShader.js
    │   └── ...
-   └── shaders/            # All shader code
-       ├── skyVertexShader.js
-       ├── skyFragmentShader.js
-       └── ...
+   └── tests/              # Vitest unit tests
    ```
 
 ### Coding Standards
@@ -72,6 +78,8 @@ SpinCube is an interactive 3D visualization featuring a spinning cube with dynam
 3. **Performance**
 
    - Consider performance implications, especially for shader code
+   - Keep motion frame-rate independent: scale by `dt`, use the helpers in
+     `utils/spring.js`
    - Use appropriate optimization techniques
    - Balance visual quality with performance
 

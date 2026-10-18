@@ -1,5 +1,10 @@
-export const blurVertexShader = `
+/**
+ * Vertex shader for the final full-screen finishing pass.
+ */
+
+export const finishVertexShader = `
   varying vec2 vUv;
+
   void main() {
     vUv = uv;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);

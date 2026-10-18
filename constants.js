@@ -1,69 +1,136 @@
-// --- Debug mode ---
-export const DEBUG = process.env.DEBUG !== false; // Toggle debug mode for controls panel
-export const USE_INTENSE_BACKGROUND = false; // Using calm background with darker colors
+// All tunable parameters live here. They are grouped into plain objects so the
+// debug panel (press "d" in dev, or add ?debug to the URL) can tweak them live.
 
-// --- Cube constants ---
-export const CUBE_SIZE = 2.25; // Increased by 50% from 1.5
-export const CORNER_RADIUS = 0.05; // Reduced corner radius for less rounded edges
-export const SEGMENTS = 12; // Increased segments for smoother edges
+// --- Camera & rendering ---
+export const CAMERA = {
+  fov: 32, // Narrow lens for a product-shot look with little distortion
+  distance: 7.2, // Resting distance from the cube
+  minDistance: 4.6,
+  maxDistance: 12,
+  parallax: 0.5, // How far the camera drifts with the pointer
+  parallaxRate: 3, // 1/s, how quickly the camera follows the pointer
+  minVisibleWidth: 3.8, // World units kept in view on narrow (portrait) screens
+};
 
-// --- Material constants ---
-export const USE_GLASS_MATERIAL = false; // Toggle between glass (true) and metallic (false)
+export const RENDER = {
+  maxPixelRatio: 2,
+  exposure: 1.05,
+  msaaSamples: 4,
+};
 
-// Metallic material properties
-export const MATERIAL_COLOR = 0xffffff; // White color to maximize reflectivity
-export const METALNESS = 1.0;
-export const ROUGHNESS = 0.001; // Ultra-low roughness for maximum shininess
-export const EMISSIVE_COLOR = 0xffffff; // Color of the glow
-export const EMISSIVE_INTENSITY = 0.15; // Intensity of the glow
-export const ENV_MAP_INTENSITY = 3.0; // Significantly increased intensity for stronger reflections
-export const CLEARCOAT = 1.0; // Add clearcoat for extra shine
-export const CLEARCOAT_ROUGHNESS = 0.001; // Ultra-smooth clearcoat
-export const REFLECTIVITY = 1.0; // Maximum reflectivity
+// --- Glass cube ---
+export const CUBE_SIZE = 1.6;
+export const CUBE_RADIUS = 0.09; // Rounded edges catch the light
+export const CUBE_SEGMENTS = 8;
 
-// Glass material properties
-export const GLASS_COLOR = 0xffffff; // Base color for glass
-export const GLASS_METALNESS = 0.0; // Non-metallic for glass
-export const GLASS_ROUGHNESS = 0.05; // Slightly rough for subtle diffusion
-export const GLASS_TRANSMISSION = 0.95; // High transmission for transparency
-export const GLASS_THICKNESS = 0.5; // Medium thickness
-export const GLASS_IOR = 1.5; // Index of refraction (1.5 is typical for glass)
-export const GLASS_ENV_MAP_INTENSITY = 1.0; // Environment map intensity for glass
+export const GLASS = {
+  color: "#ffffff",
+  roughness: 0.03,
+  thickness: 0.45, // Refraction strength; higher splits the S into more copies
+  ior: 1.5,
+  dispersion: 6, // Rainbow fringes on refracted edges
+  iridescence: 0.25, // Thin-film sheen on the faces
+  iridescenceIOR: 1.3,
+  attenuationColor: "#dfe8ff",
+  attenuationDistance: 3.5,
+  envMapIntensity: 1.8,
+  specularIntensity: 1,
+};
 
-// --- Environment map constants ---
-export const ENV_MAP_SIZE = 512; // Reduced quality for better performance (power of 2)
-export const ENV_MAP_UPDATE_INTERVAL = 1 / 20; // Update env map at 20 FPS for better performance
-export const BACKGROUND_BLUR = 0.8; // Increased blur for better performance and aesthetics (0-1)
+// --- Glowing S at the core ---
+export const CORE = {
+  size: 0.92, // Cap height of the letter in world units
+  depth: 0.2,
+  bevel: 0.03,
+  faceColor: "#ff9a3d", // Amber glow
+  faceGlow: 1.6, // Emissive intensity; enough to clear the bloom threshold
+  rimColor: "#d9a35f", // Polished metal on the letter's sides
+  chargeGlow: 1.5, // Extra emissive intensity at full charge
+  sway: 0.22, // Radians the letter rocks while facing the camera
+};
 
-// --- Cube interaction constants ---
-export const INITIAL_SPIN_SPEED = { x: 0.003, y: 0.005 }; // Increased spin speed for better visual effect
-export const K_SPRING = 0.12; // Increased springiness for smoother animations
-export const K_DAMPING = 0.3; // Increased damping for smoother deceleration
-export const MOUSE_DRAG_SENSITIVITY = 0.002; // Significantly reduced sensitivity when picking up
-export const TARGET_OFFSET_DAMPING_FACTOR = 0.95; // Increased for smoother transitions
-export const INERTIA_DAMPING_FACTOR = 0.95; // For thrown cube spin decay
-export const CUBE_INTERACTION_PARALLAX_FACTOR = 0.01; // Reduced parallax effect
-export const THROW_VELOCITY_FACTOR = 0.4; // Reduced for more controlled throwing
+// --- Motion ---
+export const SPIN = {
+  idle: { x: 0.14, y: 0.34, z: 0.05 }, // rad/s, the resting tumble
+  relaxRate: 0.8, // 1/s, how fast a throw settles back to the idle tumble
+  dragSensitivity: 0.0075, // rad per pixel dragged
+  throwSmoothing: 18, // 1/s, smoothing of the drag velocity used for throws
+  maxThrow: 16, // rad/s cap on throw speed
+  clickSpin: 5, // rad/s spin kick from a full-charge release
+};
 
-// --- Scroll constants ---
-export const SCROLL_SPRING = 0.15; // Increased spring constant for smoother scroll physics
-export const SCROLL_DAMPING = 0.35; // Increased damping for smoother scroll transitions
-export const SCROLL_SENSITIVITY = 0.001; // Sensitivity for scroll input
-export const MIN_SCROLL_SCALE = 0.5; // Minimum scale when scrolling
-export const MAX_SCROLL_SCALE = 1.5; // Maximum scale when scrolling
+// The S is loosely coupled to the cube: a hard throw drags it along, then a
+// spring turns it back to face the viewer.
+export const CORE_SPRING = {
+  stiffness: 14,
+  damping: 4.5,
+  coupling: 1.6, // How strongly the cube's spin drags the letter
+};
 
-// --- Bounce animation constants ---
-export const BOUNCE_DURATION = 0.6; // Slightly longer animation duration
-export const BOUNCE_MAX_SCALE = 1.4; // Increased maximum scale during bounce
-export const BOUNCE_MIN_SCALE = 0.75; // Decreased minimum scale during bounce
-export const ORIGINAL_CUBE_COLOR = 0xffffff; // Store original cube color
-export const BOUNCE_CUBE_COLOR = 0xffffff; // Keep the cube white during bounce (removed blue color)
+export const PRESS = {
+  chargeTime: 1.1, // Seconds of holding to reach full charge
+  squash: 0.08, // Scale reduction at full charge
+  stiffness: 220, // Scale spring
+  damping: 9, // Low damping gives a jelly wobble on release
+  kick: 7, // Outward scale velocity on release, times charge
+  dragThreshold: 6, // Pixels of movement before a press becomes a drag
+};
 
-// --- Shader constants ---
-export const CHECKER_SCALE = 20.0; // How many checkers across
-export const WARP_AMOUNT = 0.05; // Strength of warping
-export const WARP_FREQUENCY = 5.0; // Spatial frequency of warp pattern
-export const WARP_SPEED = 0.1; // How fast the warp animates
+export const ZOOM = {
+  sensitivity: 0.0035, // Distance per wheel delta unit
+  stiffness: 70,
+  damping: 16,
+};
 
-// --- Post-processing constants ---
-export const ENABLE_GOD_RAYS = true; // Toggle for god rays effect
+export const FLOAT = {
+  amplitude: 0.06, // Gentle vertical bob
+  speed: 0.7,
+};
+
+// --- Pulse released on click ---
+export const PULSE = {
+  minStrength: 0.35, // Strength of a quick tap; a full charge gives 1
+  ringSpeed: 0.5, // Backdrop units per second the ring expands
+  dustSpeed: 7, // World units per second the dust shockwave travels
+  decay: 1.1, // 1/s
+};
+
+// --- Backdrop ---
+export const BACKDROP = {
+  radius: 40,
+  baseTop: "#0b0e18",
+  baseBottom: "#040508",
+  glowColor: "#1e2550", // Nebula behind the cube
+  glowStrength: 0.9,
+  lineColor: "#c8d8ff",
+  lineIntensity: 0.9,
+  lineDensity: 16, // Line bands per backdrop unit of height
+  lineWidth: 0.025, // Fraction of the band height
+  lineDrift: 0.006, // Backdrop units per second of upward drift
+  pulseColor: "#ffb066",
+  chargePinch: 0.55, // How hard the lines bend towards the cube at full charge
+};
+
+// --- Dust ---
+export const DUST = {
+  count: 650,
+  innerRadius: 1.8,
+  outerRadius: 9,
+  size: 0.06, // World-space diameter
+  brightness: 0.45,
+  drift: 0.12, // Amplitude of the wandering motion
+  chargePull: 0.2, // Fraction the dust shell contracts at full charge
+};
+
+// --- Post-processing ---
+export const BLOOM = {
+  strength: 0.45,
+  radius: 0.35,
+  threshold: 0.6,
+};
+
+export const FINISH = {
+  vignette: 0.55,
+  grain: 0.035,
+  aberration: 0.0012, // Colour fringing towards the screen edges
+};

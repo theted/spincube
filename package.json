@@ -1,34 +1,23 @@
 {
   "name": "spincube",
-  "version": "1.0.0",
-  "description": "An interactive 3D visualization featuring a spinning cube with dynamic effects, built with Three.js.",
-  "main": "main.js",
-  "directories": {
-    "test": "tests"
-  },
+  "version": "2.0.0",
+  "private": true,
+  "description": "A glass cube with a glowing S at its heart, built with Three.js.",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:prod": "cross-env NODE_ENV=production node build-constants.js && vite build",
-    "build:saved": "node save-settings.js && cross-env NODE_ENV=production vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "export-settings": "vite export-settings.html --open"
+    "test:watch": "vitest"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@testing-library/dom": "^10.4.0",
-    "@types/three": "^0.176.0",
-    "cross-env": "^7.0.3",
-    "jsdom": "^26.1.0",
-    "terser": "^5.39.1",
-    "vite": "^6.3.5",
-    "vitest": "^3.1.3"
+    "lil-gui": "^0.21.0",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
   },
   "dependencies": {
-    "three": "^0.176.0"
+    "three": "^0.186.1"
   }
 }
