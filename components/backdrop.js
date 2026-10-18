@@ -23,8 +23,12 @@ export function createBackdrop() {
     u_pulseColor: { value: new THREE.Color() },
     u_pulseTime: { value: 0 },
     u_pulseStrength: { value: 0 },
-    u_ringSpeed: { value: 0 },
     u_pulseDecay: { value: 0 },
+    u_rippleSpeed: { value: 0 },
+    u_rippleWidth: { value: 0 },
+    u_rippleAmplitude: { value: 0 },
+    u_rippleGlow: { value: 0 },
+    u_flash: { value: 0 },
     u_charge: { value: 0 },
     u_chargePinch: { value: 0 },
   };
@@ -55,8 +59,12 @@ export function createBackdrop() {
     uniforms.u_lineWidth.value = BACKDROP.lineWidth;
     uniforms.u_lineDrift.value = BACKDROP.lineDrift;
     uniforms.u_pulseColor.value.set(BACKDROP.pulseColor);
-    uniforms.u_ringSpeed.value = PULSE.ringSpeed;
     uniforms.u_pulseDecay.value = PULSE.decay;
+    uniforms.u_rippleSpeed.value = PULSE.rippleSpeed;
+    uniforms.u_rippleWidth.value = PULSE.rippleWidth;
+    uniforms.u_rippleAmplitude.value = PULSE.rippleAmplitude;
+    uniforms.u_rippleGlow.value = PULSE.rippleGlow;
+    uniforms.u_flash.value = PULSE.flash;
     uniforms.u_chargePinch.value = BACKDROP.chargePinch;
   };
   applySettings();

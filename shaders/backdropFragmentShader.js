@@ -6,7 +6,7 @@ import { snoise } from "./noise.js";
  *  - a dark vertical gradient
  *  - a slowly churning nebula glow behind the cube
  *  - thin horizontal light lines that the glass cube refracts and disperses
- *  - a ring of light that sweeps outwards when a pulse is released
+ *  - a ripple that runs outwards through the lines when a pulse is released
  *
  * Most of it is drawn in planar coordinates: the view direction projected
  * onto the plane z = -1 behind the cube. Lines of constant height there look
@@ -27,8 +27,12 @@ export const backdropFragmentShader = `
   uniform vec3 u_pulseColor;
   uniform float u_pulseTime;
   uniform float u_pulseStrength;
-  uniform float u_ringSpeed;
   uniform float u_pulseDecay;
+  uniform float u_rippleSpeed;
+  uniform float u_rippleWidth;
+  uniform float u_rippleAmplitude;
+  uniform float u_rippleGlow;
+  uniform float u_flash;
   uniform float u_charge; // 0..1 while a press is held
   uniform float u_chargePinch;
 
@@ -54,17 +58,22 @@ export const backdropFragmentShader = `
     float glow = exp(-r2 / 0.05) * (0.5 + 0.5 * n1) + exp(-r2 / 0.4) * 0.25 * n2;
     color += u_glowColor * glow * u_glowStrength;
 
-    // Pulse ring expanding from behind the cube
+    // Pulse: a ripple travels outwards and pushes the lines aside as it
+    // passes, the release of the pull that charging put on them
+    float r = sqrt(r2);
     float pulseFade = u_pulseStrength * exp(-u_pulseTime * u_pulseDecay);
-    float ringPos = u_pulseTime * u_ringSpeed;
-    float ring = exp(-pow((sqrt(r2) - ringPos) / 0.025, 2.0)) * pulseFade;
-    float flash = exp(-r2 / 0.03) * u_pulseStrength * exp(-u_pulseTime * 4.0);
+    float rippleOffset = (r - u_pulseTime * u_rippleSpeed) / u_rippleWidth;
+    float ripple = exp(-rippleOffset * rippleOffset) * pulseFade;
+    // A push-pull wave (the derivative of the band) kinks each line it crosses
+    float push = -rippleOffset * ripple * 1.65;
+    vec2 lq = q - q / max(r, 1e-4) * push * u_rippleAmplitude;
+    float flash = exp(-r2 / 0.02) * u_pulseStrength * exp(-u_pulseTime * 5.0);
 
     // Light lines: one possible line per band, with a gentle wobble and drift.
     // Charging bends them in towards the cube, as if it pulls on them.
-    float wobble = snoise(vec3(q.x * 1.5, q.y * 3.0, u_time * 0.08)) * 0.006;
-    float pinch = 1.0 + u_charge * u_chargePinch * exp(-q.x * q.x / 0.08);
-    float y = (q.y * pinch + wobble + u_time * u_lineDrift) * u_lineDensity;
+    float wobble = snoise(vec3(lq.x * 1.5, lq.y * 3.0, u_time * 0.08)) * 0.006;
+    float pinch = 1.0 + u_charge * u_chargePinch * exp(-lq.x * lq.x / 0.08);
+    float y = (lq.y * pinch + wobble + u_time * u_lineDrift) * u_lineDensity;
     float id = floor(y);
     float f = abs(fract(y) - 0.5);
     float aa = fwidth(y) * 1.2;
@@ -76,12 +85,12 @@ export const backdropFragmentShader = `
     float flicker = 0.8 + 0.2 * sin(u_time * (0.3 + hash11(id + 3.0)) + id);
     float extent = mix(0.2, 0.85, hash11(id + 31.0));
     float shift = (hash11(id + 5.0) - 0.5) * 0.5;
-    float span = smoothstep(extent, extent * 0.4, abs(q.x + shift));
-    float band = smoothstep(0.5, 0.12, abs(q.y));
+    float span = smoothstep(extent, extent * 0.4, abs(lq.x + shift));
+    float band = smoothstep(0.5, 0.12, abs(lq.y));
     float lines = line * presence * brightness * flicker * span * band;
 
-    color += u_lineColor * lines * u_lineIntensity * (1.0 + ring * 4.0);
-    color += u_pulseColor * (ring * 1.2 + flash * 0.5);
+    color += u_lineColor * lines * u_lineIntensity * (1.0 + ripple * u_rippleGlow);
+    color += u_pulseColor * flash * u_flash;
 
     gl_FragColor = vec4(color, 1.0);
   }

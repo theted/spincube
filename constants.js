@@ -90,7 +90,11 @@ export const FLOAT = {
 // --- Pulse released on click ---
 export const PULSE = {
   minStrength: 0.35, // Strength of a quick tap; a full charge gives 1
-  ringSpeed: 0.5, // Backdrop units per second the ring expands
+  rippleSpeed: 0.55, // Backdrop units per second the ripple runs outwards
+  rippleWidth: 0.06, // Width of the ripple band, in backdrop units
+  rippleAmplitude: 0.05, // How far the ripple pushes the lines aside
+  rippleGlow: 2, // Extra line brightness inside the ripple
+  flash: 0.35, // Brief warm glow behind the cube
   dustSpeed: 7, // World units per second the dust shockwave travels
   decay: 1.1, // 1/s
 };
@@ -107,7 +111,7 @@ export const BACKDROP = {
   lineDensity: 16, // Line bands per backdrop unit of height
   lineWidth: 0.025, // Fraction of the band height
   lineDrift: 0.006, // Backdrop units per second of upward drift
-  pulseColor: "#ffb066",
+  pulseColor: "#ffb066", // Colour of the release flash
   chargePinch: 0.55, // How hard the lines bend towards the cube at full charge
 };
 

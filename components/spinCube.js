@@ -33,7 +33,7 @@ export function createSpinCube() {
       0
     );
 
-    const flash = motion.pulse.strength * Math.exp(-motion.pulse.time * 5) * 6;
+    const flash = motion.pulse.strength * Math.exp(-motion.pulse.time * 5) * 3;
     core.face.emissiveIntensity =
       CORE.faceGlow + CORE.chargeGlow * charge * charge + flash;
   };

@@ -42,6 +42,19 @@ describe("motion", () => {
     expect(held.charge).toBe(0);
   });
 
+  it("does nothing when the browser cancels the press to scroll", () => {
+    const motion = createMotion();
+    const omegaBefore = motion.cubeOmega.clone();
+    pressMotion(motion);
+    run(motion, 0.5);
+    const strength = releaseMotion(motion, { wasDrag: false, cancelled: true });
+    expect(strength).toBe(0);
+    expect(motion.charge).toBe(0);
+    expect(motion.pulse.strength).toBe(0);
+    expect(motion.scale.velocity).toBeLessThan(1);
+    expect(motion.cubeOmega.distanceTo(omegaBefore)).toBeLessThan(0.5);
+  });
+
   it("drops the charge when the press becomes a drag", () => {
     const motion = createMotion();
     pressMotion(motion);

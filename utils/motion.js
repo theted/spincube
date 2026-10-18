@@ -67,14 +67,21 @@ export function cancelCharge(motion) {
 
 /**
  * The press ended. A drag throws the cube; a click releases a pulse whose
- * strength grows with how long the press was held.
+ * strength grows with how long the press was held. A cancelled press (the
+ * browser took the touch over to scroll) does neither.
  * @param {Object} motion
- * @param {{wasDrag: boolean}} release
+ * @param {{wasDrag: boolean, cancelled?: boolean}} release
  * @param {Function} [random] - Source of randomness for the spin kick
- * @returns {number} Pulse strength, or 0 for a throw
+ * @returns {number} Pulse strength, or 0 for a throw or a cancel
  */
-export function releaseMotion(motion, { wasDrag }, random = Math.random) {
+export function releaseMotion(motion, { wasDrag, cancelled = false }, random = Math.random) {
   motion.isCharging = false;
+
+  if (cancelled) {
+    motion.throwOmega.set(0, 0, 0);
+    motion.charge = 0;
+    return 0;
+  }
 
   if (wasDrag) {
     motion.cubeOmega.copy(motion.throwOmega).clampLength(0, SPIN.maxThrow);

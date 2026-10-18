@@ -1,0 +1,97 @@
+<!doctype html>
+<!-- Dev-only harness, not part of the build: SpinCube mounted transparently
+     over a CSS imitation of the sundbergsolutions.se hero backdrop. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SpinCube embed</title>
+    <style>
+      html {
+        background: #0a0f1f;
+      }
+      body {
+        margin: 0;
+        min-height: 200vh; /* Room to check that the page still scrolls */
+        color: #eef2ff;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        background:
+          radial-gradient(40vw 40vw at 88% 6%, #ffcf8099, transparent 60%),
+          radial-gradient(55vw 60vh at 85% 55%, #4b2a8a, transparent 70%),
+          radial-gradient(60vw 70vh at 12% 25%, #1d46b8, transparent 70%),
+          radial-gradient(50vw 40vh at 30% 95%, #0b5a6e, transparent 70%),
+          #0a0f1f;
+        background-attachment: fixed;
+      }
+      .hero {
+        min-height: 100svh;
+        display: grid;
+        align-items: center;
+      }
+      .hero-inner {
+        width: 100%;
+        max-width: 76rem;
+        margin-inline: auto;
+        padding: 6rem clamp(1.25rem, 5vw, 4rem);
+        box-sizing: border-box;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) clamp(16rem, 30vw, 28rem);
+        align-items: center;
+        gap: 2rem;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(3rem, 9vw, 8.5rem);
+        line-height: 0.86;
+        font-weight: 300;
+        letter-spacing: -0.03em;
+      }
+      h1 b {
+        display: block;
+        font-weight: 750;
+      }
+      .hero-cube {
+        aspect-ratio: 1;
+        mask-image: radial-gradient(closest-side, #000 72%, transparent);
+      }
+      @media (max-width: 48rem) {
+        .hero-inner {
+          grid-template-columns: 1fr;
+        }
+        .hero-cube {
+          width: 10rem;
+          justify-self: end;
+          order: -1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="hero">
+      <div class="hero-inner">
+        <h1>sundberg <b>solutions</b></h1>
+        <div class="hero-cube" id="cube"></div>
+      </div>
+    </section>
+    <script type="module">
+      import { mountSpinCube } from "/index.js";
+
+      // Extra overrides for experiments: ?overrides={"GLASS":{"ior":1.4}}
+      const extra = JSON.parse(
+        new URLSearchParams(location.search).get("overrides") ?? "{}"
+      );
+      const overrides = {
+        CAMERA: { distance: 5.6, minVisibleWidth: 3 },
+        RENDER: { maxPixelRatio: 1.5 },
+        DUST: { count: 220, innerRadius: 1.6, outerRadius: 3.4 },
+      };
+      for (const [group, values] of Object.entries(extra)) {
+        overrides[group] = { ...overrides[group], ...values };
+      }
+
+      window.spincube = mountSpinCube(document.getElementById("cube"), {
+        overrides,
+      });
+    </script>
+  </body>
+</html>
