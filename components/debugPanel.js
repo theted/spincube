@@ -1,7 +1,7 @@
 import GUI from "lil-gui";
 import * as SETTINGS from "../constants.js";
 
-const { BACKDROP, BLOOM, CORE, CORE_SPRING, DUST, FINISH, GLASS, PRESS, RENDER, SPIN } =
+const { BACKDROP, BLOOM, CORE, CORE_SPRING, DUST, FINISH, GLASS, PRESS, PULSE, RENDER, SPIN } =
   SETTINGS;
 
 /**
@@ -57,6 +57,14 @@ export function createDebugPanel(applySettings) {
   backdrop.add(DUST, "chargePull", 0, 0.6, 0.01).name("dust charge pull");
   backdrop.add(DUST, "brightness", 0, 2, 0.05).name("dust brightness");
 
+  const pulse = gui.addFolder("Pulse");
+  pulse.add(PULSE, "rippleSpeed", 0.1, 2, 0.01);
+  pulse.add(PULSE, "rippleWidth", 0.01, 0.3, 0.005);
+  pulse.add(PULSE, "rippleAmplitude", 0, 0.15, 0.001);
+  pulse.add(PULSE, "rippleGlow", 0, 5, 0.05);
+  pulse.add(PULSE, "flash", 0, 2, 0.05);
+  pulse.add(PULSE, "decay", 0.2, 4, 0.05);
+
   const post = gui.addFolder("Post");
   post.add(RENDER, "exposure", 0.2, 3, 0.05);
   post.add(BLOOM, "strength", 0, 3, 0.05).name("bloom strength");
@@ -74,7 +82,7 @@ export function createDebugPanel(applySettings) {
 
 function copySettings() {
   const json = JSON.stringify(
-    { GLASS, CORE, SPIN, CORE_SPRING, PRESS, BACKDROP, DUST, BLOOM, FINISH, RENDER },
+    { GLASS, CORE, SPIN, CORE_SPRING, PRESS, PULSE, BACKDROP, DUST, BLOOM, FINISH, RENDER },
     null,
     2
   );

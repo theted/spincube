@@ -10,17 +10,19 @@ const WHEEL_LINE_HEIGHT = 16; // Pixels per line for wheel events in line mode
  * @param {HTMLElement} element - The canvas
  * @param {Object} options
  * @param {number} options.dragThreshold - Pixels moved before a press becomes a drag
+ * @param {boolean} [options.wheel] - Capture the wheel for zooming
+ * @param {boolean} [options.keyboard] - Space presses and releases like a click
  * @param {Function} options.onPress - A press started (pointer or Space)
  * @param {Function} options.onDragStart - A press turned into a drag
- * @param {Function} options.onRelease - Called with { wasDrag }
- * @returns {Object} Input state plus consume helpers
+ * @param {Function} options.onRelease - Called with { wasDrag, cancelled }
+ * @returns {Object} Input state, consume helpers and dispose
  */
 export function createInput(
   element,
-  { dragThreshold, onPress, onDragStart, onRelease }
+  { dragThreshold, wheel = false, keyboard = false, onPress, onDragStart, onRelease }
 ) {
   const state = {
-    pointer: new Vector2(), // -1..1, for camera parallax
+    pointer: new Vector2(), // -1..1 across the window, for camera parallax
     isDown: false,
     isDragging: false,
   };
@@ -32,7 +34,7 @@ export function createInput(
   let lastY = 0;
   let dragX = 0;
   let dragY = 0;
-  let wheel = 0;
+  let wheelDelta = 0;
   let spaceDown = false;
 
   const setPointer = (event) => {
@@ -42,15 +44,21 @@ export function createInput(
     );
   };
 
-  const release = () => {
-    const wasDrag = state.isDragging;
-    state.isDown = false;
-    state.isDragging = false;
-    element.classList.remove("dragging");
-    onRelease({ wasDrag });
+  const setDragging = (dragging) => {
+    state.isDragging = dragging;
+    element.style.cursor = dragging ? "grabbing" : "grab";
   };
 
-  const handlers = {
+  // A cancelled press (the browser took the touch over to scroll the page)
+  // releases without a pulse or a throw
+  const release = (cancelled) => {
+    const wasDrag = state.isDragging;
+    state.isDown = false;
+    setDragging(false);
+    onRelease({ wasDrag, cancelled });
+  };
+
+  const elementHandlers = {
     pointerdown(event) {
       if (state.isDown) return; // Ignore extra fingers
       activePointer = event.pointerId;
@@ -63,14 +71,12 @@ export function createInput(
       onPress();
     },
     pointermove(event) {
-      setPointer(event);
       if (!state.isDown || event.pointerId !== activePointer) return;
       if (
         !state.isDragging &&
         Math.hypot(event.clientX - downX, event.clientY - downY) > dragThreshold
       ) {
-        state.isDragging = true;
-        element.classList.add("dragging");
+        setDragging(true);
         onDragStart();
       }
       if (state.isDragging) {
@@ -83,45 +89,60 @@ export function createInput(
     pointerup(event) {
       if (event.pointerId !== activePointer) return;
       activePointer = null;
-      release();
+      release(false);
     },
     pointercancel(event) {
-      handlers.pointerup(event);
+      if (event.pointerId !== activePointer) return;
+      activePointer = null;
+      release(true);
     },
-    pointerleave(event) {
-      if (event.pointerType === "mouse" && !state.isDown) state.pointer.set(0, 0);
+    contextmenu(event) {
+      if (state.isDown) event.preventDefault(); // A long touch is a charge
     },
-    wheel(event) {
+  };
+  if (wheel) {
+    elementHandlers.wheel = (event) => {
       event.preventDefault();
-      wheel +=
+      wheelDelta +=
         event.deltaMode === WheelEvent.DOM_DELTA_LINE
           ? event.deltaY * WHEEL_LINE_HEIGHT
           : event.deltaY;
+    };
+  }
+
+  const windowHandlers = {
+    pointermove: setPointer,
+    pointerout(event) {
+      // Left the window: let the camera drift back to centre
+      if (!event.relatedTarget && event.pointerType === "mouse" && !state.isDown) {
+        state.pointer.set(0, 0);
+      }
     },
   };
-
-  const keyHandlers = {
-    keydown(event) {
+  if (keyboard) {
+    windowHandlers.keydown = (event) => {
       if (event.code !== "Space" || event.repeat || isTyping(event)) return;
       event.preventDefault();
       if (state.isDown) return;
       spaceDown = true;
       state.isDown = true;
       onPress();
-    },
-    keyup(event) {
+    };
+    windowHandlers.keyup = (event) => {
       if (event.code !== "Space" || !spaceDown) return;
       spaceDown = false;
-      release();
-    },
-  };
+      release(false);
+    };
+  }
 
-  for (const [type, handler] of Object.entries(handlers)) {
-    element.addEventListener(type, handler, { passive: type !== "wheel" });
-  }
-  for (const [type, handler] of Object.entries(keyHandlers)) {
-    window.addEventListener(type, handler);
-  }
+  const listen = (target, handlers, method) => {
+    for (const [type, handler] of Object.entries(handlers)) {
+      target[method](type, handler, { passive: type !== "wheel" && type !== "contextmenu" });
+    }
+  };
+  listen(element, elementHandlers, "addEventListener");
+  listen(window, windowHandlers, "addEventListener");
+  element.style.cursor = "grab";
 
   return {
     state,
@@ -133,9 +154,13 @@ export function createInput(
     },
     /** Wheel delta in pixels since the last call. */
     consumeWheel() {
-      const value = wheel;
-      wheel = 0;
+      const value = wheelDelta;
+      wheelDelta = 0;
       return value;
+    },
+    dispose() {
+      listen(element, elementHandlers, "removeEventListener");
+      listen(window, windowHandlers, "removeEventListener");
     },
   };
 }

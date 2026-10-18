@@ -21,16 +21,9 @@
         overflow: hidden;
         background: #05060a;
       }
-      canvas {
-        display: block;
-        touch-action: none;
-        cursor: grab;
-      }
-      canvas.dragging {
-        cursor: grabbing;
-      }
       .hint {
         position: fixed;
+        z-index: 1;
         left: 0;
         right: 0;
         bottom: max(28px, env(safe-area-inset-bottom));

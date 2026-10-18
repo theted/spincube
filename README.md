@@ -15,7 +15,7 @@ back to face you.
   the S along with it before it swings back.
 - **Hold** (mouse, touch or Space) to charge. The S burns brighter, the
   backdrop lines bend in towards the cube and the dust is drawn in.
-- **Release** to fire a pulse: a ring of light sweeps out across the backdrop,
+- **Release** to fire a pulse: a ripple runs out through the backdrop lines,
   a shockwave pushes the dust away, and the cube wobbles and spins. A longer
   hold gives a stronger pulse.
 - **Scroll** to zoom.
@@ -43,6 +43,43 @@ the clipboard as JSON, ready to paste back into `constants.js`.
 In development, `window.spincube` exposes the motion state and a
 `frame(dt, time)` function for poking at things from the console.
 
+`embed.html` (dev server only, not built) mounts the cube transparently over
+a stand-in for the sundbergsolutions.se hero. To try settings, pass them in
+the URL: `/embed.html?overrides={"GLASS":{"envMapIntensity":2.5}}`.
+
+## Embedding
+
+The package exports `mountSpinCube`, so another site can depend on this repo
+(`npm i github:theted/spincube`) instead of copying it. sundbergsolutions.se
+does this.
+
+```js
+import { mountSpinCube } from "spincube";
+
+const cube = mountSpinCube(element, {
+  background: "transparent", // or "scene" for the light-line backdrop
+  overrides: { CAMERA: { distance: 5.6 }, DUST: { count: 220 } },
+});
+// later
+cube.dispose();
+```
+
+The canvas fills `element` and follows its size. The defaults suit a cube
+inside a page:
+- the wheel and Space are left alone;
+- `touch-action: pan-y` lets vertical swipes scroll the page;
+- a touch the browser takes over for scrolling neither pulses nor throws;
+- rendering pauses while the cube is off screen or the tab is hidden.
+
+`index.d.ts` lists every option. `overrides` change the module-level settings
+in `constants.js`, so mount one cube per page.
+
+On a transparent canvas, three.js clears the buffer that glass refracts to
+half-transparent white, which makes the glass look milky.
+`components/stage.js` swaps that clear for a fully transparent one. That
+depends on three's internals, which is why `three` is pinned to `~0.186`.
+Recheck the embed after any three upgrade.
+
 ## How it works
 
 - **Glass**: `MeshPhysicalMaterial` with transmission, dispersion, a little
@@ -53,7 +90,7 @@ In development, `window.spincube` exposes the motion state and a
   `assets/helvetikerBoldS.js`. Its faces are emissive and its sides are
   polished metal.
 - **Backdrop**: one shader on a large sphere draws the gradient, nebula glow,
-  light lines and pulse ring.
+  light lines and the pulse ripple.
 - **Motion**: quaternion spins integrated from angular velocity, plus damped
   springs with substeps. All of it is independent of the frame rate and unit
   tested (`utils/`, `tests/`).
@@ -63,7 +100,9 @@ In development, `window.spincube` exposes the motion state and a
 
 ## Project structure
 
-- `main.js` – wiring and the animation loop
+- `index.js`, `index.d.ts` – the library entry, `mountSpinCube`
+- `main.js` – the standalone page: mounts the cube, the hint and the debug panel
+- `components/scene.js` – wiring and the animation loop
 - `constants.js` – all tunable parameters
 - `components/` – scene pieces (stage, environment, backdrop, cube, dust,
   post-processing, hint, debug panel)

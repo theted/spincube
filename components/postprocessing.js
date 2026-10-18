@@ -10,12 +10,17 @@ import { finishVertexShader, finishFragmentShader } from "../shaders/index.js";
 /**
  * Builds the post-processing chain: HDR render with MSAA, bloom, tone
  * mapping and colour conversion (OutputPass), then the finishing pass.
+ * On a transparent canvas the finishing pass is skipped, because its grain
+ * and vignette would paint the see-through area. Bloom keeps working there:
+ * its glow carries its own alpha.
  * @param {THREE.WebGLRenderer} renderer
  * @param {THREE.Scene} scene
  * @param {THREE.Camera} camera
- * @returns {Object} Passes plus render, resize, update and applySettings
+ * @param {Object} [options]
+ * @param {boolean} [options.transparent]
+ * @returns {Object} Passes plus render, resize, update, applySettings and dispose
  */
-export function createPostProcessing(renderer, scene, camera) {
+export function createPostProcessing(renderer, scene, camera, { transparent = false } = {}) {
   const target = new THREE.WebGLRenderTarget(1, 1, {
     type: THREE.HalfFloatType,
     samples: RENDER.msaaSamples,
@@ -39,6 +44,7 @@ export function createPostProcessing(renderer, scene, camera) {
     vertexShader: finishVertexShader,
     fragmentShader: finishFragmentShader,
   });
+  finish.enabled = !transparent;
   composer.addPass(finish);
 
   const applySettings = () => {
@@ -74,5 +80,9 @@ export function createPostProcessing(renderer, scene, camera) {
     resize,
     update,
     applySettings,
+    dispose: () => {
+      for (const pass of composer.passes) pass.dispose?.();
+      composer.dispose();
+    },
   };
 }

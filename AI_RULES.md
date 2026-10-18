@@ -42,7 +42,8 @@ SpinCube is an interactive 3D visualization featuring a spinning cube with dynam
    ```
    spincube/
    ├── index.html          # Main HTML entry point
-   ├── main.js             # Wiring and the animation loop
+   ├── index.js            # Library entry: mountSpinCube
+   ├── main.js             # The standalone page
    ├── constants.js        # All configurable parameters
    ├── assets/             # Embedded data (the S glyph)
    ├── utils/              # Pure logic, unit tested
@@ -51,6 +52,7 @@ SpinCube is an interactive 3D visualization featuring a spinning cube with dynam
    │   ├── motion.js       # The cube's motion model
    │   └── input.js        # Pointer, wheel and keyboard input
    ├── components/         # Scene pieces
+   │   ├── scene.js        # mountSpinCube: wiring and the animation loop
    │   ├── spinCube.js     # Glass cube plus the glowing S
    │   ├── backdrop.js     # Shader-drawn backdrop sphere
    │   └── ...
