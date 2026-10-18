@@ -2,6 +2,8 @@
 
 A glass cube with a glowing amber S at its heart, built with Three.js.
 
+Live at **https://spincube.sundbergsolutions.se**.
+
 The cube tumbles slowly in front of a dark backdrop of thin light lines. Its
 glass refracts and splits them into rainbow fringes, and a polished studio
 environment draws highlights along its edges. The S inside keeps turning
@@ -69,14 +71,32 @@ In development, `window.spincube` exposes the motion state and a
 - `utils/` – springs, rotation maths, input and the motion model
 - `tests/` – Vitest unit tests
 
+## Deployment
+
+`.github/workflows/deploy.yml` runs the unit tests and a build on every pull
+request. A push to `master` (or a manual run on `master`) then deploys `dist/`
+to S3 behind CloudFront, using the shared `deploy-static.yml` workflow from
+[theted/workflows](https://github.com/theted/workflows). That workflow sets
+long-lived cache headers on the fingerprinted `assets/*` and `max-age=0` on
+everything else. The setup follows archetype A in the private
+theted/infrastructure repo (`static-s3.md`), which also records the AWS
+resources behind it.
+
+The workflow reads the standard secrets: `AWS_ACCESS_KEY_ID`,
+`AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `S3_BUCKET` and
+`CLOUDFRONT_DISTRIBUTION_ID`.
+
 ## Docker
+
+For a local production-like run:
 
 ```bash
 docker build -t spincube .
 docker run -p 8080:80 spincube   # http://localhost:8080
 ```
 
-The image builds the site with Node and serves `dist/` from nginx.
+The image builds the site with Node and serves `dist/` from nginx. The live
+site doesn't use it.
 
 ## License
 
