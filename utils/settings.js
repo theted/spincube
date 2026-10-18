@@ -19,6 +19,26 @@ export function applyOverrides(overrides = {}) {
   }
 }
 
+/**
+ * The values in `current` that differ from `base`, nested the same way, in
+ * the shape applyOverrides takes. Groups with nothing changed are left out.
+ * @param {Object} current - e.g. { CORE: { faceGlow: 2, size: 0.92 } }
+ * @param {Object} base - e.g. { CORE: { faceGlow: 1.3, size: 0.92 } }
+ * @returns {Object} e.g. { CORE: { faceGlow: 2 } }
+ */
+export function diffSettings(current, base) {
+  const changes = {};
+  for (const [key, value] of Object.entries(current)) {
+    if (isPlainObject(value) && isPlainObject(base?.[key])) {
+      const nested = diffSettings(value, base[key]);
+      if (Object.keys(nested).length > 0) changes[key] = nested;
+    } else if (value !== base?.[key]) {
+      changes[key] = value;
+    }
+  }
+  return changes;
+}
+
 function deepAssign(target, values, path) {
   for (const [key, value] of Object.entries(values)) {
     if (!(key in target)) {

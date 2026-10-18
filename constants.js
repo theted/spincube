@@ -40,12 +40,18 @@ export const GLASS = {
 
 // --- Glowing S at the core ---
 export const CORE = {
-  size: 0.92, // Cap height of the letter in world units
-  depth: 0.2,
-  bevel: 0.03,
-  faceColor: "#ff9a3d", // Amber glow
-  faceGlow: 1.6, // Emissive intensity; enough to clear the bloom threshold
-  rimColor: "#d9a35f", // Polished metal on the letter's sides
+  glyph: "Inter Black", // A name from assets/glyphs.js
+  size: 0.92, // Height of the letter in world units
+  depth: 0.34,
+  bevel: 0.08, // How far the rounded bevel stands out from the sides
+  bevelSize: 0.065, // How far the bevel cuts into the glowing face
+  bevelSegments: 8, // 1 is a flat chamfer; more rounds it off
+  faceColor: "#ffd6a0", // Champagne glow
+  faceGlow: 1.3, // Emissive intensity; enough to clear the bloom threshold
+  rimColor: "#cbb594", // Polished metal on the bevel and the letter's sides
+  rimRoughness: 0.16, // Blur of the metal's reflections; 0 is a mirror
+  rimReflection: 1, // Strength of the studio reflected in the metal
+  rimGlow: 0.12, // How much of the glow colour the metal gives off itself
   chargeGlow: 1.5, // Extra emissive intensity at full charge
   sway: 0.22, // Radians the letter rocks while facing the camera
 };
@@ -112,7 +118,7 @@ export const BACKDROP = {
   lineDensity: 16, // Line bands per backdrop unit of height
   lineWidth: 0.025, // Fraction of the band height
   lineDrift: 0.006, // Backdrop units per second of upward drift
-  pulseColor: "#ffb066", // Colour of the release flash
+  pulseColor: "#ffd6a0", // Colour of the release flash, the S's champagne
   chargePinch: 0.55, // How hard the lines bend towards the cube at full charge
 };
 

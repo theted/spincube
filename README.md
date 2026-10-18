@@ -1,6 +1,6 @@
 # SpinCube
 
-A glass cube with a glowing amber S at its heart, built with Three.js.
+A glass cube with a glowing S at its heart, built with Three.js.
 
 Live at **https://spincube.sundbergsolutions.se**.
 
@@ -37,8 +37,20 @@ npm run preview  # serve dist/
 
 Every parameter lives in `constants.js`. To tune visually, press **d** in the
 dev server, or add `?debug` to the URL of any build. That opens a lil-gui
-panel bound to those settings. **Copy settings** puts the current values on
-the clipboard as JSON, ready to paste back into `constants.js`.
+panel bound to those settings. Changes are kept in localStorage, so they're
+back on the next visit with `?debug` (the page without it always shows the
+defaults), and the panel's title counts them. **Copy changed settings** puts
+just those changes on the clipboard as JSON, in the shape `overrides` takes
+and ready to paste into `constants.js`; **Copy all settings** copies every
+value, and **Reset to defaults** clears them.
+
+The panel's **The S** folder has a **font** dropdown that swaps the letter
+for other candidate glyphs (`assets/glyphCandidates.js`, loaded only with
+the panel), then **Emboss** (a preset, the bevel's height, width and
+roundness, and the letter's depth), **Glow** (a preset, colour and strength)
+and **Metal** (colour, roughness, reflection and glow). **Hide
+controls** clears the panel off the scene; **d** brings it back, or the
+**Controls** button on touch screens.
 
 In development, `window.spincube` exposes the motion state and a
 `frame(dt, time)` function for poking at things from the console.
@@ -100,9 +112,10 @@ Recheck the embed after any three upgrade.
   iridescence and both faces rendered, so the inner faces add depth.
 - **Reflections**: a procedural studio of emissive softboxes and strip lights,
   prefiltered once with `PMREMGenerator` and slowly rotated.
-- **The S**: a single glyph from Helvetiker Bold, embedded in
-  `assets/helvetikerBoldS.js`. Its faces are emissive and its sides are
-  polished metal.
+- **The S**: a single glyph from Inter Black, embedded in
+  `assets/interBlackS.js`. Its faces glow champagne, set in a rounded bevel
+  cut into the letter, so they sit inset like an embossed sign. The bevel
+  and the sides are polished metal.
 - **Backdrop**: one shader on a large sphere draws the gradient, nebula glow,
   light lines and the pulse ripple.
 - **Motion**: quaternion spins integrated from angular velocity, plus damped
@@ -153,5 +166,6 @@ site doesn't use it.
 
 ## License
 
-ISC. Helvetiker is copyright (c) 2004 MAGENTA Ltd, under the MgOpen font
-license.
+ISC. Inter is copyright (c) 2016 The Inter Project Authors, under the SIL
+Open Font License 1.1. The debug panel's candidate glyphs credit their fonts
+in `assets/glyphCandidates.js`.
