@@ -1,6 +1,6 @@
 // Simplex Noise GLSL implementation
 // Based on the common implementation by Stefan Gustavson and Ian McEwan
-// Exported as a JavaScript module for use in Three.js shaders
+// Exported as a GLSL string for injection into shaders
 
 export const snoise = `
 // Simplex 3D Noise

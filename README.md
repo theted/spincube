@@ -1,120 +1,84 @@
 # SpinCube
 
-An interactive 3D visualization featuring a spinning cube with dynamic effects, built with Three.js.
+A glass cube with a glowing amber S at its heart, built with Three.js.
 
-## Features
+The cube tumbles slowly in front of a dark backdrop of thin light lines. Its
+glass refracts and splits them into rainbow fringes, and a polished studio
+environment draws highlights along its edges. The S inside keeps turning
+back to face you.
 
-- Interactive 3D cube with physics-based interactions
-- Metallic and glass material options with bold "S" letter texture
-- Dynamic environment mapping
-- Customizable shader effects
-- Debug panel for adjusting parameters in development mode
-- Save and load settings for production builds
-- Minified single-file build output
+## Controls
+
+- **Drag** to spin the cube; let go mid-drag to throw it. A hard throw drags
+  the S along with it before it swings back.
+- **Hold** (mouse, touch or Space) to charge. The S burns brighter, the
+  backdrop lines bend in towards the cube and the dust is drawn in.
+- **Release** to fire a pulse: a ring of light sweeps out across the backdrop,
+  a shockwave pushes the dust away, and the cube wobbles and spins. A longer
+  hold gives a stronger pulse.
+- **Scroll** to zoom.
+
+The pointer also drifts the camera slightly for parallax. With
+`prefers-reduced-motion` set, the idle motion is calmer and the dust stays put.
 
 ## Development
 
-### Installation
-
 ```bash
 npm install
+npm run dev      # http://127.0.0.1:5191
+npm test
+npm run build    # static site in dist/
+npm run preview  # serve dist/
 ```
 
-### Running the Development Server
+### Tuning
 
-```bash
-npm run dev
-```
+Every parameter lives in `constants.js`. To tune visually, press **d** in the
+dev server, or add `?debug` to the URL of any build. That opens a lil-gui
+panel bound to those settings. **Copy settings** puts the current values on
+the clipboard as JSON, ready to paste back into `constants.js`.
 
-This will start a development server with hot reloading.
+In development, `window.spincube` exposes the motion state and a
+`frame(dt, time)` function for poking at things from the console.
 
-### Debug Controls
+## How it works
 
-In development mode, a debug panel is available to adjust various parameters:
+- **Glass**: `MeshPhysicalMaterial` with transmission, dispersion, a little
+  iridescence and both faces rendered, so the inner faces add depth.
+- **Reflections**: a procedural studio of emissive softboxes and strip lights,
+  prefiltered once with `PMREMGenerator` and slowly rotated.
+- **The S**: a single glyph from Helvetiker Bold, embedded in
+  `assets/helvetikerBoldS.js`. Its faces are emissive and its sides are
+  polished metal.
+- **Backdrop**: one shader on a large sphere draws the gradient, nebula glow,
+  light lines and pulse ring.
+- **Motion**: quaternion spins integrated from angular velocity, plus damped
+  springs with substeps. All of it is independent of the frame rate and unit
+  tested (`utils/`, `tests/`).
+- **Post-processing**: MSAA in a half-float render target, then bloom, then
+  ACES tone mapping, then a finishing pass that adds colour fringing, a
+  vignette and grain.
 
-- Material properties (metallic/glass, roughness, etc.)
-- Cube properties (size, spin speed)
-- Animation settings (bounce duration, spring constants)
-- Shader effects (warp amount, checker scale)
+## Project structure
 
-### Saving Settings
+- `main.js` – wiring and the animation loop
+- `constants.js` – all tunable parameters
+- `components/` – scene pieces (stage, environment, backdrop, cube, dust,
+  post-processing, hint, debug panel)
+- `shaders/` – GLSL, one file per shader
+- `utils/` – springs, rotation maths, input and the motion model
+- `tests/` – Vitest unit tests
 
-1. Adjust the parameters in the debug panel
-2. Click the "Save Settings" button to save to localStorage
-3. Run `npm run export-settings` to open a page for downloading the settings file
-4. Download the settings file and place it in the project root directory
-
-### Building for Production
-
-#### Standard Build
-
-```bash
-npm run build
-```
-
-#### Production Build with Debug Mode Disabled
-
-```bash
-npm run build:prod
-```
-
-#### Production Build with Saved Settings
-
-```bash
-npm run build:saved
-```
-
-This will use the settings from `saved-settings.json` and disable debug mode.
-
-## Testing
-
-```bash
-npm run test
-```
-
-## Docker Support
-
-The project includes Docker support for easy deployment.
-
-### Building the Docker Image
+## Docker
 
 ```bash
 docker build -t spincube .
+docker run -p 8080:80 spincube   # http://localhost:8080
 ```
 
-### Running the Docker Container
-
-```bash
-docker run -p 8080:80 spincube
-```
-
-This will start the application on http://localhost:8080
-
-### How the Dockerfile Works
-
-The Dockerfile uses a multi-stage build process:
-
-1. **Build Stage**:
-
-   - Uses Node.js Alpine image for a small footprint
-   - Installs dependencies with `npm ci` for reproducible builds
-   - Builds the application with `npm run build`
-
-2. **Production Stage**:
-   - Uses Nginx Alpine for a lightweight web server
-   - Copies only the built assets from the build stage
-   - Configures Nginx to serve the static files
-   - Exposes port 80 for HTTP traffic
-
-This approach results in a small, efficient Docker image that contains only what's needed to run the application in production.
-
-## Project Structure
-
-- `/components` - Reusable components (cube, environment, debug UI)
-- `/shaders` - GLSL shader code
-- `/utils` - Utility functions (physics, animation, events)
-- `/tests` - Test files
+The image builds the site with Node and serves `dist/` from nginx.
 
 ## License
 
-ISC
+ISC. Helvetiker is copyright (c) 2004 MAGENTA Ltd, under the MgOpen font
+license.
