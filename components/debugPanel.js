@@ -52,26 +52,33 @@ export function createDebugPanel(applySettings) {
   glass.add(GLASS, "envMapIntensity", 0, 4, 0.05).name("reflection");
   glass.add(GLASS, "specularIntensity", 0, 2, 0.05).name("specular");
 
-  // The S: its glyph, then how it's cut and how it glows. The presets set
-  // the values below them, which can then be fine-tuned.
-  const core = gui.addFolder("The S");
-  core.add(CORE, "glyph", Object.keys(GLYPHS));
-  addPreset(core, "emboss", EMBOSS_PRESETS, commit, refresh);
-  core.add(CORE, "depth", 0.02, 0.8, 0.01);
-  core.add(CORE, "bevel", 0, 0.2, 0.005);
-  core.add(CORE, "bevelSize", 0, 0.12, 0.005);
-  core.add(CORE, "bevelSegments", 1, 12, 1);
-  addPreset(core, "glow", GLOW_PRESETS, commit, refresh);
-  core.addColor(CORE, "faceColor");
-  core.add(CORE, "faceGlow", 0, 10, 0.05);
-  core.add(CORE, "chargeGlow", 0, 20, 0.1);
-  core.addColor(CORE, "rimColor").name("metal colour");
-  core.add(CORE, "rimRoughness", 0, 1, 0.01).name("metal roughness");
-  core.add(CORE, "rimReflection", 0, 4, 0.05).name("metal reflection");
-  core.add(CORE, "rimGlow", 0, 1, 0.01).name("metal glow");
-  core.add(CORE, "sway", 0, 1, 0.01);
+  // The S, in plain words: its font, then how it's embossed, how it glows
+  // and the metal around the glow. Each preset sets the values below it,
+  // which can then be fine-tuned.
+  const letter = gui.addFolder("The S");
+  letter.add(CORE, "glyph", Object.keys(GLYPHS)).name("font");
+
+  const emboss = letter.addFolder("Emboss");
+  addPreset(emboss, EMBOSS_PRESETS, commit, refresh);
+  emboss.add(CORE, "bevel", 0, 0.2, 0.005).name("height");
+  emboss.add(CORE, "bevelSize", 0, 0.12, 0.005).name("width");
+  emboss.add(CORE, "bevelSegments", 1, 12, 1).name("roundness");
+  emboss.add(CORE, "depth", 0.02, 0.8, 0.01).name("letter depth");
+
+  const glow = letter.addFolder("Glow");
+  addPreset(glow, GLOW_PRESETS, commit, refresh);
+  glow.addColor(CORE, "faceColor").name("colour");
+  glow.add(CORE, "faceGlow", 0, 10, 0.05).name("strength");
+  glow.add(CORE, "chargeGlow", 0, 20, 0.1).name("extra when charged");
+
+  const metal = letter.addFolder("Metal").close();
+  metal.addColor(CORE, "rimColor").name("colour");
+  metal.add(CORE, "rimRoughness", 0, 1, 0.01).name("roughness");
+  metal.add(CORE, "rimReflection", 0, 4, 0.05).name("reflection");
+  metal.add(CORE, "rimGlow", 0, 1, 0.01).name("glow");
 
   const motion = gui.addFolder("Motion");
+  motion.add(CORE, "sway", 0, 1, 0.01).name("S sway");
   motion.add(SPIN.idle, "x", -1, 1, 0.01).name("idle spin x");
   motion.add(SPIN.idle, "y", -1, 1, 0.01).name("idle spin y");
   motion.add(SPIN.idle, "z", -1, 1, 0.01).name("idle spin z");
@@ -131,7 +138,7 @@ export function createDebugPanel(applySettings) {
   gui.add({ hide: () => setVisible(false) }, "hide").name("Hide controls (D)");
 
   for (const folder of gui.folders) folder.close();
-  core.open();
+  letter.open();
   return { toggle: () => setVisible(gui._hidden) };
 }
 
@@ -163,20 +170,19 @@ function createRevealButton(onClick) {
 }
 
 /**
- * A dropdown that sets several CORE values at once. It starts on no preset,
- * since the values may have been changed since. lil-gui calls the panel's
- * onChange before this one's, so it commits the new values itself. The
- * release flash follows the glow colour.
+ * A "preset" dropdown that sets several CORE values at once. It starts on no
+ * preset, since the values may have been changed since. lil-gui calls the
+ * panel's onChange before this one's, so it commits the new values itself.
+ * The release flash follows the glow colour.
  * @param {GUI} folder
- * @param {string} name
  * @param {Object<string, Object>} presets - CORE values by preset name
  * @param {Function} commit - Applies and saves the settings
  * @param {Function} refresh - Updates every control to its value
  */
-function addPreset(folder, name, presets, commit, refresh) {
+function addPreset(folder, presets, commit, refresh) {
   const NONE = "—";
-  const choice = { [name]: NONE };
-  folder.add(choice, name, [NONE, ...Object.keys(presets)]).onChange((key) => {
+  const choice = { preset: NONE };
+  folder.add(choice, "preset", [NONE, ...Object.keys(presets)]).onChange((key) => {
     if (key === NONE) return;
     Object.assign(CORE, presets[key]);
     if (presets[key].faceColor) BACKDROP.pulseColor = presets[key].faceColor;

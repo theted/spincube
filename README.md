@@ -44,9 +44,11 @@ just those changes on the clipboard as JSON, in the shape `overrides` takes
 and ready to paste into `constants.js`; **Copy all settings** copies every
 value, and **Reset to defaults** clears them.
 
-The panel's **The S** folder swaps the letter for other candidate glyphs
-(`assets/glyphCandidates.js`, loaded only with the panel) and has presets for
-the emboss and the glow, plus the metal's roughness and reflection. **Hide
+The panel's **The S** folder has a **font** dropdown that swaps the letter
+for other candidate glyphs (`assets/glyphCandidates.js`, loaded only with
+the panel), then **Emboss** (a preset, the bevel's height, width and
+roundness, and the letter's depth), **Glow** (a preset, colour and strength)
+and **Metal** (colour, roughness, reflection and glow). **Hide
 controls** clears the panel off the scene; **d** brings it back, or the
 **Controls** button on touch screens.
 
