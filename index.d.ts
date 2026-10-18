@@ -15,6 +15,12 @@ export type SpinCubeSettingGroup =
   | "BLOOM"
   | "FINISH";
 
+export interface SpinCubeLayout {
+  x?: number;
+  y?: number;
+  zoom?: number;
+}
+
 export interface SpinCubeOptions {
   /** Draw the light-line backdrop, or leave the canvas see-through. Default "transparent". */
   background?: "scene" | "transparent";
@@ -22,8 +28,22 @@ export interface SpinCubeOptions {
   wheelZoom?: boolean;
   /** Hold Space to charge. Default false. */
   keyboard?: boolean;
-  /** CSS touch-action for the canvas. Default "pan-y", so vertical swipes scroll the page. */
+  /** CSS touch-action for the canvas. Default "pan-y pinch-zoom", so vertical swipes scroll and pinches zoom the page. */
   touchAction?: string;
+  /** Any press on the canvas charges the cube, not only one on the cube itself. Default false. */
+  pressAnywhere?: boolean;
+  /**
+   * Element to take presses from, such as a section whose text lies over the
+   * canvas. Presses on the cube win over that content; the rest pass through.
+   * Default: the canvas.
+   */
+  pointerTarget?: HTMLElement;
+  /**
+   * Where the cube sits in the canvas: x and y as fractions (0.5 is the
+   * centre), zoom as a size multiplier. A function is called with the
+   * canvas size on every resize. Default centred, zoom 1.
+   */
+  layout?: SpinCubeLayout | ((width: number, height: number) => SpinCubeLayout);
   /** Stop rendering while off screen or in a hidden tab. Default true. */
   autoPause?: boolean;
   /**

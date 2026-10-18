@@ -12,6 +12,7 @@ const cube = mountSpinCube(document.body, {
   wheelZoom: true,
   keyboard: true,
   touchAction: "none",
+  pressAnywhere: true,
   onPress: () => hint.dismiss(),
 });
 
