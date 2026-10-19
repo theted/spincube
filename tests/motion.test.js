@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
-import { CAMERA, PULSE, SPIN } from "../constants.js";
+import { CAMERA, CORE, PULSE, SPIN } from "../constants.js";
 import {
   cancelCharge,
   createMotion,
@@ -83,6 +83,27 @@ describe("motion", () => {
     run(motion, 3);
     const front = new Vector3(0, 0, 1).applyQuaternion(motion.coreQuaternion);
     expect(front.z).toBeGreaterThan(0.9);
+  });
+
+  it("turns the S on its own with CORE.spin, and back to the camera without", () => {
+    const spin = CORE.spin;
+    try {
+      CORE.spin = Math.PI / 2; // A quarter turn a second
+      const motion = createMotion();
+      run(motion, 1);
+      expect(motion.coreSpin).toBeCloseTo(Math.PI / 2, 1);
+      run(motion, 1); // Half a turn in: the back of the S faces the camera
+      const front = new Vector3(0, 0, 1).applyQuaternion(motion.coreQuaternion);
+      expect(front.z).toBeLessThan(0);
+
+      CORE.spin = 0;
+      motion.coreSpin = 0;
+      run(motion, 4);
+      front.set(0, 0, 1).applyQuaternion(motion.coreQuaternion);
+      expect(front.z).toBeGreaterThan(0.9);
+    } finally {
+      CORE.spin = spin;
+    }
   });
 
   it("clamps the zoom and springs towards it", () => {

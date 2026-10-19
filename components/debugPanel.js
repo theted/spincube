@@ -3,18 +3,21 @@ import * as SETTINGS from "../constants.js";
 import { GLYPHS } from "../assets/glyphs.js";
 import { GLYPH_CANDIDATES } from "../assets/glyphCandidates.js";
 import { EMBOSS_PRESETS, GLOW_PRESETS } from "./debugPresets.js";
-import { copyText, createSettingsStore } from "./debugSettings.js";
+import { createSettingsStore } from "./debugSettings.js";
+import { addCopyButton, addValuePreset, createRevealButton } from "./debugControls.js";
+import { addPresetFolder } from "./debugPresetFolder.js";
 
-const { BACKDROP, BLOOM, CORE, CORE_SPRING, DUST, FINISH, GLASS, PRESS, PULSE, RENDER, SPIN } =
+const { BACKDROP, BLOOM, CORE, CORE_SPRING, DUST, FINISH, FLOAT, GLASS, PRESS, PULSE, RENDER, SPIN } =
   SETTINGS;
 
 /**
  * Creates a lil-gui panel bound to the settings in constants.js. Values read
  * every frame apply on their own; the rest are pushed with applySettings.
  * Changes are kept in localStorage, so they're back on the next visit with
- * ?debug, and the title counts them. "Copy changed settings" puts just the
- * changes on the clipboard as JSON, ready to paste into constants.js or pass
- * as overrides; "Copy all settings" copies every value.
+ * ?debug, and the title counts them. Whole looks can be saved as presets
+ * (debugPresetFolder.js). "Copy changed settings" puts just the changes on
+ * the clipboard as JSON, ready to paste into constants.js or pass as
+ * overrides; "Copy all settings" copies every value.
  * @param {Function} applySettings - Pushes all settings to materials and uniforms
  * @returns {{toggle: Function}} Shows or hides the panel
  */
@@ -39,6 +42,8 @@ export function createDebugPanel(applySettings) {
   gui.onChange(commit);
   showCount();
 
+  const presets = addPresetFolder(gui, store, commit, refresh);
+
   const glass = gui.addFolder("Glass");
   glass.add(GLASS, "roughness", 0, 0.5, 0.005);
   glass.add(GLASS, "thickness", 0, 4, 0.05);
@@ -52,24 +57,34 @@ export function createDebugPanel(applySettings) {
   glass.add(GLASS, "envMapIntensity", 0, 4, 0.05).name("reflection");
   glass.add(GLASS, "specularIntensity", 0, 2, 0.05).name("specular");
 
-  // The S, in plain words: its font, then how it's embossed, how it glows
-  // and the metal around the glow. Each preset sets the values below it,
-  // which can then be fine-tuned.
+  // The S, in plain words: its font and size, then how it's embossed, how it
+  // glows, how it moves and the metal around the glow. Each preset sets the
+  // values below it, which can then be fine-tuned.
   const letter = gui.addFolder("The S");
   letter.add(CORE, "glyph", Object.keys(GLYPHS)).name("font");
+  letter.add(CORE, "size", 0.3, 1.4, 0.01);
 
   const emboss = letter.addFolder("Emboss");
-  addPreset(emboss, EMBOSS_PRESETS, commit, refresh);
+  addValuePreset(emboss, EMBOSS_PRESETS, commit, refresh);
   emboss.add(CORE, "bevel", 0, 0.2, 0.005).name("height");
   emboss.add(CORE, "bevelSize", 0, 0.12, 0.005).name("width");
   emboss.add(CORE, "bevelSegments", 1, 12, 1).name("roundness");
   emboss.add(CORE, "depth", 0.02, 0.8, 0.01).name("letter depth");
 
   const glow = letter.addFolder("Glow");
-  addPreset(glow, GLOW_PRESETS, commit, refresh);
+  addValuePreset(glow, GLOW_PRESETS, commit, refresh);
   glow.addColor(CORE, "faceColor").name("colour");
   glow.add(CORE, "faceGlow", 0, 10, 0.05).name("strength");
   glow.add(CORE, "chargeGlow", 0, 20, 0.1).name("extra when charged");
+
+  // It turns back to face you on a spring, which the cube's spin drags at
+  const spin = letter.addFolder("Spin");
+  spin.add(CORE, "spin", -3, 3, 0.05).name("own spin");
+  spin.add(CORE, "sway", 0, 1, 0.01).name("rock");
+  spin.add(CORE, "swaySpeed", 0, 4, 0.05).name("rock speed");
+  spin.add(CORE_SPRING, "stiffness", 0, 60, 0.5).name("turn-back pull");
+  spin.add(CORE_SPRING, "damping", 0, 20, 0.1).name("turn-back damping");
+  spin.add(CORE_SPRING, "coupling", 0, 10, 0.1).name("drag from cube");
 
   const metal = letter.addFolder("Metal").close();
   metal.addColor(CORE, "rimColor").name("colour");
@@ -77,18 +92,21 @@ export function createDebugPanel(applySettings) {
   metal.add(CORE, "rimReflection", 0, 4, 0.05).name("reflection");
   metal.add(CORE, "rimGlow", 0, 1, 0.01).name("glow");
 
+  // The cube's own motion
   const motion = gui.addFolder("Motion");
-  motion.add(CORE, "sway", 0, 1, 0.01).name("S sway");
   motion.add(SPIN.idle, "x", -1, 1, 0.01).name("idle spin x");
   motion.add(SPIN.idle, "y", -1, 1, 0.01).name("idle spin y");
   motion.add(SPIN.idle, "z", -1, 1, 0.01).name("idle spin z");
   motion.add(SPIN, "relaxRate", 0.05, 5, 0.05);
+  motion.add(SPIN, "dragSensitivity", 0.001, 0.03, 0.0005).name("drag sensitivity");
+  motion.add(SPIN, "maxThrow", 1, 40, 0.5).name("max throw");
   motion.add(SPIN, "clickSpin", 0, 20, 0.1);
-  motion.add(CORE_SPRING, "stiffness", 0, 60, 0.5).name("core stiffness");
-  motion.add(CORE_SPRING, "damping", 0, 20, 0.1).name("core damping");
-  motion.add(CORE_SPRING, "coupling", 0, 10, 0.1).name("core coupling");
+  motion.add(PRESS, "chargeTime", 0.2, 4, 0.05).name("charge time");
+  motion.add(PRESS, "squash", 0, 0.3, 0.005);
   motion.add(PRESS, "damping", 1, 40, 0.5).name("wobble damping");
   motion.add(PRESS, "kick", 0, 20, 0.1).name("release kick");
+  motion.add(FLOAT, "amplitude", 0, 0.3, 0.005).name("float height");
+  motion.add(FLOAT, "speed", 0, 3, 0.05).name("float speed");
 
   const backdrop = gui.addFolder("Backdrop");
   backdrop.addColor(BACKDROP, "glowColor");
@@ -138,70 +156,7 @@ export function createDebugPanel(applySettings) {
   gui.add({ hide: () => setVisible(false) }, "hide").name("Hide controls (D)");
 
   for (const folder of gui.folders) folder.close();
+  presets.open();
   letter.open();
   return { toggle: () => setVisible(gui._hidden) };
-}
-
-/**
- * A small corner button that shows the hidden panel again.
- * @param {Function} onClick
- * @returns {HTMLButtonElement}
- */
-function createRevealButton(onClick) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.textContent = "Controls";
-  button.hidden = true;
-  Object.assign(button.style, {
-    position: "fixed",
-    top: "12px",
-    right: "12px",
-    zIndex: "1001",
-    padding: "6px 12px",
-    border: "1px solid rgba(255, 255, 255, 0.2)",
-    borderRadius: "999px",
-    background: "rgba(10, 12, 20, 0.6)",
-    color: "rgba(255, 255, 255, 0.75)",
-    font: "12px system-ui, sans-serif",
-  });
-  button.addEventListener("click", onClick);
-  document.body.append(button);
-  return button;
-}
-
-/**
- * A "preset" dropdown that sets several CORE values at once. It starts on no
- * preset, since the values may have been changed since. lil-gui calls the
- * panel's onChange before this one's, so it commits the new values itself.
- * The release flash follows the glow colour.
- * @param {GUI} folder
- * @param {Object<string, Object>} presets - CORE values by preset name
- * @param {Function} commit - Applies and saves the settings
- * @param {Function} refresh - Updates every control to its value
- */
-function addPreset(folder, presets, commit, refresh) {
-  const NONE = "—";
-  const choice = { preset: NONE };
-  folder.add(choice, "preset", [NONE, ...Object.keys(presets)]).onChange((key) => {
-    if (key === NONE) return;
-    Object.assign(CORE, presets[key]);
-    if (presets[key].faceColor) BACKDROP.pulseColor = presets[key].faceColor;
-    commit();
-    refresh();
-  });
-}
-
-/**
- * A button that copies some text, and says so on its label for a moment.
- * @param {GUI} gui
- * @param {string} label
- * @param {Function} text - Returns the text to copy
- */
-function addCopyButton(gui, label, text) {
-  const copy = async () => {
-    if (!(await copyText(text()))) return;
-    button.name("Copied ✓");
-    setTimeout(() => button.name(label), 1500);
-  };
-  const button = gui.add({ copy }, "copy").name(label);
 }

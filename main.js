@@ -3,9 +3,6 @@
 // light-line backdrop.
 
 import { mountSpinCube } from "./index.js";
-import { createHint } from "./components/hint.js";
-
-const hint = createHint(document.getElementById("hint"));
 
 const cube = mountSpinCube(document.body, {
   background: "scene",
@@ -13,7 +10,6 @@ const cube = mountSpinCube(document.body, {
   keyboard: true,
   touchAction: "none",
   pressAnywhere: true,
-  onPress: () => hint.dismiss(),
 });
 
 // Debug panel: ?debug in the URL, or press "d" during development. Once it's

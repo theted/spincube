@@ -54,6 +54,8 @@ export const CORE = {
   rimGlow: 0.12, // How much of the glow colour the metal gives off itself
   chargeGlow: 1.5, // Extra emissive intensity at full charge
   sway: 0.22, // Radians the letter rocks while facing the camera
+  swaySpeed: 1, // How fast it rocks; 2 is twice as fast
+  spin: 0, // rad/s it turns about its upright axis on its own; 0 keeps it facing you
 };
 
 // --- Motion ---

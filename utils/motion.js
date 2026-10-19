@@ -28,6 +28,7 @@ const _kick = new Vector3();
 const _lookAt = new Matrix4();
 const _sway = new Quaternion();
 const _swayEuler = new Euler();
+const _spin = new Quaternion();
 const _coreTarget = new Quaternion();
 const _coreSpring = { ...CORE_SPRING, driveOmega: null };
 
@@ -44,6 +45,10 @@ export function createMotion({ reducedMotion = false } = {}) {
     throwOmega: new Vector3(),
     coreQuaternion: null, // Set on the first step, facing the camera
     coreOmega: new Vector3(),
+    // Integrated rather than taken from the clock, so a change to CORE.spin or
+    // CORE.swaySpeed carries on smoothly instead of jumping
+    coreSpin: 0, // Radians the S has turned through on its own
+    swayPhase: 0, // Seconds of rocking, at CORE.swaySpeed
     scale: { value: 1, velocity: 0 },
     zoom: { value: CAMERA.distance, velocity: 0 },
     zoomTarget: CAMERA.distance,
@@ -172,7 +177,9 @@ export function stepMotion(motion, { dt, time, isDragging, cameraPosition }) {
   stepSpring(motion.zoom, motion.zoomTarget, ZOOM.stiffness, ZOOM.damping, dt);
 
   // The S turns to face the camera, but the cube's spin drags it along
-  coreTarget(cameraPosition, time, motion.motionScale, _coreTarget);
+  motion.coreSpin = (motion.coreSpin + CORE.spin * motion.motionScale * dt) % (2 * Math.PI);
+  motion.swayPhase += CORE.swaySpeed * dt;
+  coreTarget(cameraPosition, motion, _coreTarget);
   if (!motion.coreQuaternion) motion.coreQuaternion = _coreTarget.clone();
   Object.assign(_coreSpring, CORE_SPRING);
   _coreSpring.driveOmega = isDragging ? motion.throwOmega : motion.cubeOmega;
@@ -195,14 +202,14 @@ export function smoothstep01(x) {
   return x * x * (3 - 2 * x);
 }
 
-// Orientation that points the letter's front (+Z) at the camera, rocked gently
-function coreTarget(cameraPosition, time, swayScale, out) {
+// Orientation that points the letter's front (+Z) at the camera, turned
+// about its upright axis by its own spin, and rocked gently
+function coreTarget(cameraPosition, motion, out) {
   _lookAt.lookAt(cameraPosition, ORIGIN, UP);
   out.setFromRotationMatrix(_lookAt);
-  _swayEuler.set(
-    Math.sin(time * 0.43) * CORE.sway * 0.5 * swayScale,
-    Math.sin(time * 0.61) * CORE.sway * swayScale,
-    0
-  );
-  return out.multiply(_sway.setFromEuler(_swayEuler));
+  const phase = motion.swayPhase;
+  const sway = CORE.sway * motion.motionScale;
+  _swayEuler.set(Math.sin(phase * 0.43) * sway * 0.5, Math.sin(phase * 0.61) * sway, 0);
+  _spin.setFromAxisAngle(UP, motion.coreSpin);
+  return out.multiply(_spin).multiply(_sway.setFromEuler(_swayEuler));
 }
