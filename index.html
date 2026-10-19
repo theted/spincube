@@ -21,35 +21,9 @@
         overflow: hidden;
         background: #05060a;
       }
-      .hint {
-        position: fixed;
-        z-index: 1;
-        left: 0;
-        right: 0;
-        bottom: max(28px, env(safe-area-inset-bottom));
-        margin: 0;
-        text-align: center;
-        font:
-          500 12px/1.4 ui-sans-serif,
-          system-ui,
-          -apple-system,
-          "Segoe UI",
-          sans-serif;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: #c8d8ff;
-        opacity: 0;
-        transition: opacity 1.2s ease;
-        pointer-events: none;
-        user-select: none;
-      }
-      .hint.visible {
-        opacity: 0.45;
-      }
     </style>
   </head>
   <body>
-    <p id="hint" class="hint">drag to spin · hold to charge · scroll to zoom</p>
     <script type="module" src="/main.js"></script>
   </body>
 </html>
