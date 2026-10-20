@@ -49,6 +49,7 @@ export function createMotion({ reducedMotion = false } = {}) {
     // CORE.swaySpeed carries on smoothly instead of jumping
     coreSpin: 0, // Radians the S has turned through on its own
     swayPhase: 0, // Seconds of rocking, at CORE.swaySpeed
+    glowPhase: 0, // Radians into the S's breath, at CORE.breatheSpeed
     scale: { value: 1, velocity: 0 },
     zoom: { value: CAMERA.distance, velocity: 0 },
     zoomTarget: CAMERA.distance,
@@ -179,6 +180,7 @@ export function stepMotion(motion, { dt, time, isDragging, cameraPosition }) {
   // The S turns to face the camera, but the cube's spin drags it along
   motion.coreSpin = (motion.coreSpin + CORE.spin * motion.motionScale * dt) % (2 * Math.PI);
   motion.swayPhase += CORE.swaySpeed * dt;
+  motion.glowPhase = (motion.glowPhase + 2 * Math.PI * CORE.breatheSpeed * dt) % (2 * Math.PI);
   coreTarget(cameraPosition, motion, _coreTarget);
   if (!motion.coreQuaternion) motion.coreQuaternion = _coreTarget.clone();
   Object.assign(_coreSpring, CORE_SPRING);

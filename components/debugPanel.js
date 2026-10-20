@@ -69,12 +69,15 @@ export function createDebugPanel(applySettings) {
   emboss.add(CORE, "bevel", 0, 0.2, 0.005).name("height");
   emboss.add(CORE, "bevelSize", 0, 0.12, 0.005).name("width");
   emboss.add(CORE, "bevelSegments", 1, 12, 1).name("roundness");
+  emboss.add(CORE, "bevelInset").name("cut into face");
   emboss.add(CORE, "depth", 0.02, 0.8, 0.01).name("letter depth");
 
   const glow = letter.addFolder("Glow");
   addValuePreset(glow, GLOW_PRESETS, commit, refresh);
   glow.addColor(CORE, "faceColor").name("colour");
   glow.add(CORE, "faceGlow", 0, 10, 0.05).name("strength");
+  glow.add(CORE, "breathe", 0, 1, 0.01);
+  glow.add(CORE, "breatheSpeed", 0.02, 2, 0.01).name("breaths per second");
   glow.add(CORE, "chargeGlow", 0, 20, 0.1).name("extra when charged");
 
   // It turns back to face you on a spring, which the cube's spin drags at

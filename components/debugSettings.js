@@ -60,6 +60,15 @@ export function createSettingsStore() {
       applyOverrides(structuredClone(defaults));
       writeStored(SETTINGS_KEY, undefined);
     },
+    /**
+     * Sets the defaults, then `values` over them, so nothing from the last
+     * look lingers. Throws if `values` has settings that don't exist.
+     * @param {Object} values - In the shape applyOverrides takes
+     */
+    load(values) {
+      applyOverrides(structuredClone(defaults));
+      applyOverrides(structuredClone(values));
+    },
     /** @returns {string} The changes from the defaults, as JSON for applyOverrides */
     changes: () => toJSON(changes()),
     /** @returns {string} Every tuned value, as JSON */
@@ -80,10 +89,7 @@ export function createSettingsStore() {
        * Brings back a preset's look. Values it doesn't have keep their
        * defaults. Throws if it has settings that no longer exist.
        */
-      load(name) {
-        applyOverrides(structuredClone(defaults));
-        applyOverrides(presets()[name]);
-      },
+      load: (name) => store.load(presets()[name]),
       /** @returns {string} A preset's changes from the defaults, as JSON */
       changes: (name) => toJSON(diffSettings(presets()[name] ?? {}, defaults)),
       /** @returns {string} Every preset's changes from the defaults, by name, as JSON */
