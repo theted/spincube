@@ -44,16 +44,20 @@ just those changes on the clipboard as JSON, in the shape `overrides` takes
 and ready to paste into `constants.js`; **Copy all settings** copies every
 value, and **Reset to defaults** clears them.
 
-**Presets** keeps whole looks in localStorage: **Save current as preset**
-stores every value under the name above it, picking one from **load** brings
-it back (or **Defaults**), and **Copy preset** / **Copy all presets** copy
+**Presets** offers whole looks: **Defaults**, the built-in looks in
+`components/debugPresets.js` (**Original** is the S before Inter Black,
+exactly; then Breathing, Ice chrome, White, Frosted, Prism, Neon, Ember, Calm
+and Turntable), and your own, kept in localStorage. **Save current as
+preset** stores every value under the name above it, picking one from
+**load** brings it back, and **Copy preset** / **Copy all presets** copy
 their changes from the defaults in the same JSON shape.
 
 The panel's **The S** folder has a **font** dropdown that swaps the letter
 for other candidate glyphs (`assets/glyphCandidates.js`, loaded only with
 the panel) and its **size**, then **Emboss** (a preset, the bevel's height,
-width and roundness, and the letter's depth), **Glow** (a preset, colour
-and strength), **Spin** (its own spin, how far and how fast it rocks, and
+width and roundness, whether it's cut into the face or built out around the
+letter, and the letter's depth), **Glow** (a preset, colour and strength,
+and how much and how fast it breathes), **Spin** (its own spin, how far and how fast it rocks, and
 the spring that turns it back to face you, which the cube's spin drags at)
 and **Metal** (colour, roughness, reflection and glow). **Hide controls**
 clears the panel off the scene; **d** brings it back, or the **Controls**

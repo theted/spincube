@@ -6,7 +6,7 @@ import { GLYPHS } from "../assets/glyphs.js";
 
 // The settings the letter's shape is built from; a change rebuilds it
 const shapeKey = () =>
-  [CORE.glyph, CORE.size, CORE.depth, CORE.bevel, CORE.bevelSize, CORE.bevelSegments].join();
+  [CORE.glyph, CORE.size, CORE.depth, CORE.bevel, CORE.bevelSize, CORE.bevelSegments, CORE.bevelInset].join();
 
 /**
  * The S's height per unit of font size, so CORE.size sets its height
@@ -37,9 +37,9 @@ function createLetterGeometry() {
     bevelEnabled: true,
     bevelThickness: CORE.bevel,
     bevelSize: CORE.bevelSize,
-    // Cut the bevel into the letter rather than around it, so the outline
-    // stays the glyph's and the glowing face sits inset in the metal
-    bevelOffset: -CORE.bevelSize,
+    // Cut into the letter, the outline stays the glyph's and the glowing
+    // face sits inset in the metal; built out, the letter grows by the bevel
+    bevelOffset: CORE.bevelInset ? -CORE.bevelSize : 0,
     bevelSegments: CORE.bevelSegments,
   });
   geometry.center();

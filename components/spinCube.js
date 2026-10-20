@@ -34,8 +34,9 @@ export function createSpinCube() {
     );
 
     const flash = motion.pulse.strength * Math.exp(-motion.pulse.time * 5) * 3;
+    const breath = 1 + CORE.breathe * Math.sin(motion.glowPhase);
     core.face.emissiveIntensity =
-      CORE.faceGlow + CORE.chargeGlow * charge * charge + flash;
+      CORE.faceGlow * breath + CORE.chargeGlow * charge * charge + flash;
   };
 
   const applySettings = () => {

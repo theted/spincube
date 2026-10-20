@@ -106,6 +106,13 @@ describe("motion", () => {
     }
   });
 
+  it("breathes the glow at CORE.breatheSpeed", () => {
+    const motion = createMotion();
+    run(motion, 1);
+    // A quarter of a breath a second by default: a quarter of the way round
+    expect(motion.glowPhase).toBeCloseTo(2 * Math.PI * CORE.breatheSpeed, 1);
+  });
+
   it("clamps the zoom and springs towards it", () => {
     const motion = createMotion();
     zoomMotion(motion, -1e6);

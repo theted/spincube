@@ -46,8 +46,11 @@ export const CORE = {
   bevel: 0.08, // How far the rounded bevel stands out from the sides
   bevelSize: 0.065, // How far the bevel cuts into the glowing face
   bevelSegments: 8, // 1 is a flat chamfer; more rounds it off
+  bevelInset: true, // Cut the bevel into the face; false builds it out around the letter
   faceColor: "#ffd6a0", // Champagne glow
   faceGlow: 1.3, // Emissive intensity; enough to clear the bloom threshold
+  breathe: 0, // How much the glow swells and fades, as a fraction of faceGlow
+  breatheSpeed: 0.25, // Breaths per second
   rimColor: "#cbb594", // Polished metal on the bevel and the letter's sides
   rimRoughness: 0.16, // Blur of the metal's reflections; 0 is a mirror
   rimReflection: 1, // Strength of the studio reflected in the metal
