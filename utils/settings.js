@@ -39,6 +39,44 @@ export function diffSettings(current, base) {
   return changes;
 }
 
+/**
+ * The settings that applying `overrides` over `base` gives, as a new object.
+ * Unlike applyOverrides it changes nothing and checks no names.
+ * @param {Object} base - e.g. { CORE: { faceGlow: 1.3, size: 0.92 } }
+ * @param {Object} [overrides] - e.g. { CORE: { faceGlow: 2 } }
+ * @returns {Object} e.g. { CORE: { faceGlow: 2, size: 0.92 } }
+ */
+export function mergeSettings(base, overrides = {}) {
+  const merged = structuredClone(base);
+  for (const [key, value] of Object.entries(overrides)) {
+    merged[key] =
+      isPlainObject(value) && isPlainObject(merged[key])
+        ? mergeSettings(merged[key], value)
+        : structuredClone(value);
+  }
+  return merged;
+}
+
+/**
+ * The first preset whose every value the current settings have. Colours
+ * match in any case, and numbers within rounding, since a slider can land a
+ * hair off the value it was set to.
+ * @param {Object<string, Object>} presets - Values by preset name
+ * @param {Object} current - e.g. CORE
+ * @returns {string|undefined} The preset's name, if one matches
+ */
+export function matchingPreset(presets, current) {
+  const same = (a, b) =>
+    typeof a === "number" && typeof b === "number"
+      ? Math.abs(a - b) < 1e-6
+      : typeof a === "string" && typeof b === "string"
+        ? a.toLowerCase() === b.toLowerCase()
+        : a === b;
+  return Object.keys(presets).find((name) =>
+    Object.entries(presets[name]).every(([key, value]) => same(value, current[key]))
+  );
+}
+
 function deepAssign(target, values, path) {
   for (const [key, value] of Object.entries(values)) {
     if (!(key in target)) {

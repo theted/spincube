@@ -1,21 +1,24 @@
-import GUI from "lil-gui";
+import GUI, { OptionController } from "lil-gui";
 import * as SETTINGS from "../constants.js";
 import { GLYPHS } from "../assets/glyphs.js";
 import { GLYPH_CANDIDATES } from "../assets/glyphCandidates.js";
-import { EMBOSS_PRESETS, GLOW_PRESETS } from "./debugPresets.js";
+import { BACKDROP_PATTERNS } from "../shaders/backdropPatterns/index.js";
+import { SOLIDS } from "../utils/solids.js";
+import { BACKDROP_PRESETS, EMBOSS_PRESETS, GLOW_PRESETS, LOOKS } from "./debugPresets.js";
 import { createSettingsStore } from "./debugSettings.js";
 import { addCopyButton, addValuePreset, createRevealButton } from "./debugControls.js";
 import { addPresetFolder } from "./debugPresetFolder.js";
 
-const { BACKDROP, BLOOM, CORE, CORE_SPRING, DUST, FINISH, FLOAT, GLASS, PRESS, PULSE, RENDER, SPIN } =
+const { BACKDROP, BLOOM, CORE, CORE_SPRING, DUST, FINISH, FLOAT, GLASS, PRESS, PULSE, RENDER, SOLID, SPIN } =
   SETTINGS;
 
 /**
  * Creates a lil-gui panel bound to the settings in constants.js. Values read
  * every frame apply on their own; the rest are pushed with applySettings.
  * Changes are kept in localStorage, so they're back on the next visit with
- * ?debug, and the title counts them. Whole looks can be saved as presets
- * (debugPresetFolder.js). "Copy changed settings" puts just the changes on
+ * ?debug, and the title counts them. Whole looks can be picked or saved as
+ * presets (debugPresetFolder.js), and the preset dropdowns always show the
+ * preset the settings match. "Copy changed settings" puts just the changes on
  * the clipboard as JSON, ready to paste into constants.js or pass as
  * overrides; "Copy all settings" copies every value.
  * @param {Function} applySettings - Pushes all settings to materials and uniforms
@@ -25,16 +28,23 @@ export function createDebugPanel(applySettings) {
   // The candidate glyphs join the default only once the panel is open
   Object.assign(GLYPHS, GLYPH_CANDIDATES);
   // Bring back an earlier visit's changes before the controls read the values
-  const store = createSettingsStore();
+  const store = createSettingsStore({ looks: LOOKS });
   store.restore();
   applySettings();
 
   const gui = new GUI();
   const showCount = () => gui.title(`SpinCube · ${store.count()} changed`);
+  // The dropdowns, the preset ones among them, show what the settings match
+  const showPresets = () => {
+    for (const controller of gui.controllersRecursive()) {
+      if (controller instanceof OptionController) controller.updateDisplay();
+    }
+  };
   const commit = () => {
     applySettings();
     store.save();
     showCount();
+    showPresets();
   };
   const refresh = () => {
     for (const controller of gui.controllersRecursive()) controller.updateDisplay();
@@ -45,6 +55,12 @@ export function createDebugPanel(applySettings) {
   const presets = addPresetFolder(gui, store, commit, refresh);
 
   const glass = gui.addFolder("Glass");
+  glass.add(SOLID, "form", Object.keys(SOLIDS));
+  glass.add(SOLID, "size", 0.4, 1.4, 0.01).name("size (centre to face)");
+  glass.add(SOLID, "rounding", 0.01, 0.3, 0.005).name("edge rounding");
+  glass.add(SOLID, "cutFrost", 0, 0.6, 0.01).name("frost where cut");
+  glass.add(SOLID, "cutMilk", 0, 0.2, 0.005).name("milk where cut");
+  glass.add(SOLID, "cutSheen", 0, 1, 0.01).name("sheen where cut");
   glass.add(GLASS, "roughness", 0, 0.5, 0.005);
   glass.add(GLASS, "thickness", 0, 4, 0.05);
   glass.add(GLASS, "ior", 1, 2.4, 0.01);
@@ -65,7 +81,7 @@ export function createDebugPanel(applySettings) {
   letter.add(CORE, "size", 0.3, 1.4, 0.01);
 
   const emboss = letter.addFolder("Emboss");
-  addValuePreset(emboss, EMBOSS_PRESETS, commit, refresh);
+  addValuePreset(emboss, CORE, EMBOSS_PRESETS, commit, refresh);
   emboss.add(CORE, "bevel", 0, 0.2, 0.005).name("height");
   emboss.add(CORE, "bevelSize", 0, 0.12, 0.005).name("width");
   emboss.add(CORE, "bevelSegments", 1, 12, 1).name("roundness");
@@ -73,7 +89,10 @@ export function createDebugPanel(applySettings) {
   emboss.add(CORE, "depth", 0.02, 0.8, 0.01).name("letter depth");
 
   const glow = letter.addFolder("Glow");
-  addValuePreset(glow, GLOW_PRESETS, commit, refresh);
+  // The release flash follows the glow colour
+  addValuePreset(glow, CORE, GLOW_PRESETS, commit, refresh, ({ faceColor }) => {
+    BACKDROP.pulseColor = faceColor;
+  });
   glow.addColor(CORE, "faceColor").name("colour");
   glow.add(CORE, "faceGlow", 0, 10, 0.05).name("strength");
   glow.add(CORE, "breathe", 0, 1, 0.01);
@@ -111,14 +130,26 @@ export function createDebugPanel(applySettings) {
   motion.add(FLOAT, "amplitude", 0, 0.3, 0.005).name("float height");
   motion.add(FLOAT, "speed", 0, 3, 0.05).name("float speed");
 
+  // A pattern, its colours, then how it moves and how the cube bends and
+  // drives it. The preset sets all of them.
   const backdrop = gui.addFolder("Backdrop");
+  addValuePreset(backdrop, BACKDROP, BACKDROP_PRESETS, commit, refresh);
+  backdrop.add(BACKDROP, "pattern", Object.keys(BACKDROP_PATTERNS));
+  backdrop.addColor(BACKDROP, "baseTop").name("sky top");
+  backdrop.addColor(BACKDROP, "baseBottom").name("sky bottom");
   backdrop.addColor(BACKDROP, "glowColor");
   backdrop.add(BACKDROP, "glowStrength", 0, 3, 0.05);
   backdrop.addColor(BACKDROP, "lineColor");
   backdrop.add(BACKDROP, "lineIntensity", 0, 3, 0.05);
-  backdrop.add(BACKDROP, "lineDensity", 4, 80, 1);
-  backdrop.add(BACKDROP, "lineWidth", 0.01, 0.5, 0.005);
-  backdrop.add(BACKDROP, "lineDrift", -0.1, 0.1, 0.001);
+  backdrop.add(BACKDROP, "lineDensity", 1, 80, 1);
+  backdrop.add(BACKDROP, "lineWidth", 0.01, 1, 0.005);
+  backdrop.add(BACKDROP, "cellGlow", 0, 1, 0.01).name("cell glow (grid, kagome, hex)");
+  backdrop.add(BACKDROP, "lineDrift", -0.1, 0.1, 0.001).name("drift (light lines)");
+  backdrop.add(BACKDROP, "speed", -3, 3, 0.05);
+  backdrop.add(BACKDROP, "spinBoost", 0, 2, 0.05).name("speed from spin");
+  backdrop.add(BACKDROP, "follow", 0, 1, 0.01).name("turn with cube (room)");
+  backdrop.add(BACKDROP, "warp", 0, 3, 0.05).name("gravity well");
+  backdrop.add(BACKDROP, "warpRadius", 0.05, 1, 0.01).name("well size");
   backdrop.add(BACKDROP, "chargePinch", 0, 1, 0.01);
   backdrop.add(DUST, "chargePull", 0, 0.6, 0.01).name("dust charge pull");
   backdrop.add(DUST, "brightness", 0, 2, 0.05).name("dust brightness");
@@ -160,6 +191,6 @@ export function createDebugPanel(applySettings) {
 
   for (const folder of gui.folders) folder.close();
   presets.open();
-  letter.open();
+  backdrop.open();
   return { toggle: () => setVisible(gui._hidden) };
 }

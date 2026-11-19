@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { CAMERA, CUBE_SIZE, PRESS, SPIN } from "../constants.js";
+import { CAMERA, PRESS, SPIN } from "../constants.js";
 import { applyOverrides } from "../utils/settings.js";
 import { createInput } from "../utils/input.js";
 import {
@@ -18,6 +18,7 @@ import { createStage, portraitFitFactor } from "./stage.js";
 import { createStudioEnvironment } from "./environment.js";
 import { createBackdrop } from "./backdrop.js";
 import { createSpinCube } from "./spinCube.js";
+import { solidReach } from "./glassSolid.js";
 import { createDust } from "./dust.js";
 import { createPostProcessing } from "./postprocessing.js";
 
@@ -142,7 +143,7 @@ export function mountSpinCube(container, options = {}) {
     );
     raycaster.setFromCamera(pointerNdc, camera);
     spinCube.root.getWorldPosition(hitSphere.center);
-    hitSphere.radius = CUBE_SIZE * 0.75 * spinCube.root.scale.x;
+    hitSphere.radius = solidReach() * 0.87 * spinCube.root.scale.x;
     return raycaster.ray.intersectsSphere(hitSphere);
   }
 
@@ -194,7 +195,16 @@ export function mountSpinCube(container, options = {}) {
 
     const charge = smoothstep01(motion.charge);
     spinCube.update(motion);
-    backdrop?.update(time, motion.pulse, charge);
+    backdrop?.update({
+      time,
+      dt,
+      pulse: motion.pulse,
+      charge,
+      omega: input.state.isDragging ? motion.throwOmega : motion.cubeOmega,
+      motionScale: motion.motionScale,
+      eye: camera.position,
+      cube: spinCube.root.position,
+    });
     dust.update(time, motion.pulse, charge);
     post.update(time, charge);
     scene.environmentRotation.y = time * 0.05 * motion.motionScale;

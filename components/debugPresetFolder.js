@@ -1,18 +1,14 @@
-import { addCopyButton } from "./debugControls.js";
-import { LOOK_PRESETS } from "./debugPresets.js";
-
-const NONE = "—";
-const DEFAULTS = "Defaults";
-// Always there, ahead of the saved presets
-const BUILT_IN = [DEFAULTS, ...Object.keys(LOOK_PRESETS)];
+import { CUSTOM, addCopyButton, addPresetPicker } from "./debugControls.js";
 
 /**
- * The Presets folder: the defaults and built-in looks (debugPresets.js),
- * then whole looks saved in localStorage. Picking one loads it. "Save
- * current as preset" keeps everything set now under the name above it (an
- * existing name is replaced, after asking). "Copy preset" copies the picked
- * preset's changes from the defaults, ready to paste into constants.js or
- * pass as overrides; with none picked, it copies the current changes.
+ * The Presets folder: whole looks. The built-in ones (LOOKS in
+ * debugPresets.js) come first, then any saved in localStorage. "look" shows
+ * the one the settings match now, or "custom" once anything is changed, and
+ * picking one loads it. "Save current as preset" keeps everything set now
+ * under the name above it (a saved name is replaced, after asking; a
+ * built-in one is kept). "Copy all presets" copies the saved presets'
+ * changes from the defaults, ready to paste into debugPresets.js or pass as
+ * overrides. "Delete preset" deletes the saved look showing.
  * @param {GUI} gui
  * @param {Object} store - From createSettingsStore
  * @param {Function} commit - Applies and saves the settings
@@ -22,23 +18,17 @@ const BUILT_IN = [DEFAULTS, ...Object.keys(LOOK_PRESETS)];
 export function addPresetFolder(gui, store, commit, refresh) {
   const { presets } = store;
   const folder = gui.addFolder("Presets");
-  const names = () => [NONE, ...BUILT_IN, ...presets.names()];
-  const isSaved = (name) => presets.names().includes(name);
   const freeName = () => {
     const taken = presets.names();
-    let n = taken.length + 1;
+    let n = 1;
     while (taken.includes(`Preset ${n}`)) n++;
     return `Preset ${n}`;
   };
-  const state = { preset: NONE, name: freeName() };
+  const state = { name: freeName() };
 
-  // A saved preset wins over a built-in look of the same name: it's yours
   const load = (name) => {
-    if (name === NONE) return;
     try {
-      if (isSaved(name)) presets.load(name);
-      else if (name === DEFAULTS) store.reset();
-      else store.load(LOOK_PRESETS[name]);
+      presets.load(name);
     } catch (error) {
       window.alert(`"${name}" no longer fits the settings, so the defaults are back.\n${error.message}`);
       store.reset();
@@ -46,41 +36,32 @@ export function addPresetFolder(gui, store, commit, refresh) {
     commit();
     refresh();
   };
-  const picker = folder.add(state, "preset", names()).name("load").onChange(load);
-  const showPresets = (picked) => {
-    state.preset = picked;
-    picker.options(names());
-  };
+  const picker = addPresetPicker(folder, "look", presets.names(), presets.matching, load);
+  const showPresets = () => picker.options([CUSTOM, ...presets.names()]);
 
   const save = () => {
     const name = state.name.trim();
-    if (!name || name === NONE) return;
-    if (BUILT_IN.includes(name)) {
-      window.alert(`"${name}" is a built-in look; pick another name.`);
+    if (!name || name === CUSTOM) return;
+    if (presets.isBuiltIn(name)) {
+      window.alert(`"${name}" is a built-in look. Save under another name.`);
       return;
     }
-    if (isSaved(name) && !window.confirm(`Replace the preset "${name}"?`)) return;
+    if (presets.names().includes(name) && !window.confirm(`Replace the preset "${name}"?`)) return;
     presets.save(name);
-    showPresets(name);
+    showPresets();
     state.name = freeName();
     refresh();
   };
   const remove = () => {
-    if (!isSaved(state.preset)) return;
-    if (!window.confirm(`Delete the preset "${state.preset}"?`)) return;
-    presets.remove(state.preset);
-    showPresets(NONE);
-  };
-  const copied = () => {
-    const name = state.preset;
-    if (isSaved(name)) return presets.changes(name);
-    if (name === DEFAULTS) return "{}";
-    return LOOK_PRESETS[name] ? JSON.stringify(LOOK_PRESETS[name], null, 2) : store.changes();
+    const name = presets.matching();
+    if (!name || presets.isBuiltIn(name)) return;
+    if (!window.confirm(`Delete the preset "${name}"?`)) return;
+    presets.remove(name);
+    showPresets();
   };
 
   folder.add(state, "name");
   folder.add({ save }, "save").name("Save current as preset");
-  addCopyButton(folder, "Copy preset", copied);
   addCopyButton(folder, "Copy all presets", presets.all);
   folder.add({ remove }, "remove").name("Delete preset");
   return folder;

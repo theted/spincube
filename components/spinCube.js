@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { CORE } from "../constants.js";
 import { smoothstep01 } from "../utils/motion.js";
-import { createGlassCube } from "./glassCube.js";
+import { createGlassSolid } from "./glassSolid.js";
 import { createCoreLetter } from "./coreLetter.js";
 
 /**
@@ -11,7 +11,7 @@ import { createCoreLetter } from "./coreLetter.js";
  */
 export function createSpinCube() {
   const root = new THREE.Group();
-  const glass = createGlassCube();
+  const glass = createGlassSolid();
   const core = createCoreLetter();
   root.add(core.mesh, glass.mesh);
 

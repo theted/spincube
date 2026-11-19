@@ -11,9 +11,11 @@ import {
   FLOAT,
   PRESS,
   PULSE,
+  SOLID,
   SPIN,
   ZOOM,
 } from "../constants.js";
+import { restingQuaternion } from "./solids.js";
 import { approachFactor, stepSpring } from "./spring.js";
 import { integrateRotation, stepRotationSpring } from "./rotation.js";
 
@@ -40,7 +42,7 @@ const _coreSpring = { ...CORE_SPRING, driveOmega: null };
 export function createMotion({ reducedMotion = false } = {}) {
   return {
     // Start mostly face-on so the S reads cleanly before the tumble turns it
-    cubeQuaternion: new Quaternion().setFromEuler(new Euler(0.3, -0.45, 0)),
+    cubeQuaternion: restingQuaternion(SOLID.form),
     cubeOmega: new Vector3(SPIN.idle.x, SPIN.idle.y, SPIN.idle.z),
     throwOmega: new Vector3(),
     coreQuaternion: null, // Set on the first step, facing the camera

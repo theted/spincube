@@ -2,7 +2,7 @@
   "name": "spincube",
   "version": "2.0.0",
   "private": true,
-  "description": "A glass cube with a glowing S at its heart, built with Three.js.",
+  "description": "A glass solid with a glowing S at its heart, built with Three.js.",
   "type": "module",
   "exports": {
     ".": {
