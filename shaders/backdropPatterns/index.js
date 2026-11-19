@@ -21,5 +21,6 @@ import { dots } from "./dots.js";
 import { hex } from "./hex.js";
 import { weave } from "./weave.js";
 import { rays } from "./rays.js";
+import { kagome } from "./kagome.js";
 
-export const BACKDROP_PATTERNS = { lines, grid, dots, hex, weave, rays, horizon, tunnel, room, contours };
+export const BACKDROP_PATTERNS = { lines, grid, kagome, dots, hex, weave, rays, horizon, tunnel, room, contours };

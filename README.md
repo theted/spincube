@@ -1,9 +1,10 @@
 # SpinCube
 
 A glass solid with a glowing S at its heart, built with Three.js. It began
-as a cube and kept the name; it is now cut as an octahedron, and can be a
-tetrahedron, a truncated tetrahedron, a cuboctahedron, an icosahedron or the
-cube again.
+as a cube and kept the name; it is now cut as a rectified tetrahedron (a
+tetrahedron with its corners ground off to the middle of each edge), and can
+be a tetrahedron, a truncated tetrahedron, a cuboctahedron, an icosahedron or
+the cube again.
 
 Live at **https://spincube.sundbergsolutions.se**.
 
@@ -63,6 +64,10 @@ shows the defaults.
 **Backdrop** picks what the lines draw (`BACKDROP.pattern`), with a preset
 for each:
 - **lines**, the light lines (the default);
+- **kagome**, hexagons ringed by small triangles: the triangle grid
+  rectified, as the glass is the tetrahedron rectified. Charging slides its
+  lines back together into plain triangles, and **cell glow** lights its
+  hexagons (Kagome);
 - **grid**, square cells drifting up; with **cell glow** above 0 its cells
   flare up and fade one by one, more of them near the cube (Lit grid); with
   **gravity well** above 0 it sags in around the cube and follows it as the
@@ -96,6 +101,9 @@ the spring that turns it back to face you, which the cube's spin drags at)
 and **Metal** (colour, roughness, reflection and glow). **Hide controls**
 clears the panel off the scene; **d** brings it back, or the **Controls**
 button on touch screens.
+
+The standalone page also takes a look or a pattern from the URL, without the
+panel: `?look=Kagome` (any look's name) or `?pattern=grid` (any pattern).
 
 In development, `window.spincube` exposes the motion state and a
 `frame(dt, time)` function for poking at things from the console.
@@ -158,15 +166,24 @@ Recheck the embed after any three upgrade.
 - **The solid**: `SOLID.form` picks what the glass is cut as (the panel's
   Glass folder has it as **form**). The tetrahedron's family is all there:
   `tetrahedron`, `truncated` (corners cut a third of the way along each
-  edge) and `octahedron` (cut to the middle of each edge: the rectified
-  tetrahedron, the default), plus `cube`, `cuboctahedron` and `icosahedron`.
+  edge) and `rectified` (cut to the middle of each edge, which leaves an
+  octahedron: the default), plus `cube`, `cuboctahedron` and `icosahedron`.
+  Where corners were cut off, the faces are ground glass (`SOLID.cutFrost`,
+  `cutMilk` and `cutSheen`), so the rectified tetrahedron shows four clear
+  triangles of the tetrahedron it came from and four satin ones where its
+  corners were (`CUTS` in `utils/solids.js`, `utils/cutFaces.js`). The
+  tetrahedron's family starts with one of those clear faces turned to you,
+  a corner up, so the rectified one shows a six-pointed star before it
+  tumbles.
   `utils/solids.js` lists each one's corners, and `utils/roundedHull.js`
   rounds any convex solid off: flat faces, quarter-pipe edges and spherical
   corners with exact normals. `SOLID.size` is the distance from the centre
   to the faces, so the S has the same room in every form (which makes the
   tetrahedron a big one).
-- **Reflections**: a procedural studio of emissive softboxes and strip lights,
-  prefiltered once with `PMREMGenerator` and slowly rotated.
+- **Reflections**: a procedural studio of emissive softboxes and strip lights
+  inside walls shaded from a dark floor to a dim sky, so every face reflects
+  a slightly different shade, prefiltered once with `PMREMGenerator` and
+  slowly rotated.
 - **The S**: a single glyph from Inter Black, embedded in
   `assets/interBlackS.js`. Its faces glow champagne, set in a rounded bevel
   cut into the letter, so they sit inset like an embossed sign. The bevel

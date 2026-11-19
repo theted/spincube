@@ -21,13 +21,18 @@ export const RENDER = {
 
 // --- The glass solid ---
 export const SOLID = {
-  // What the glass is cut as: "octahedron" (the rectified tetrahedron),
-  // "tetrahedron", "truncated" (the truncated tetrahedron), "cube",
-  // "cuboctahedron" or "icosahedron". See utils/solids.js.
-  form: "octahedron",
+  // What the glass is cut as: "rectified" (the rectified tetrahedron, an
+  // octahedron), "tetrahedron", "truncated" (the truncated tetrahedron),
+  // "cube", "cuboctahedron" or "icosahedron". See utils/solids.js.
+  form: "rectified",
   size: 0.8, // From the centre to the faces: the room the S has to turn in
-  rounding: 0.09, // Rounded edges catch the light
+  rounding: 0.07, // Rounded edges catch the light
   segments: 8, // Steps across each rounded edge
+  // Where corners were cut off (rectified, truncated, cuboctahedron), the
+  // faces are ground: the roughness they get, 0 for clear glass like the rest
+  cutFrost: 0.1,
+  cutMilk: 0.035, // The light ground glass scatters back, so those faces read even on black
+  cutSheen: 0.45, // Extra thin-film iridescence on those faces
 };
 
 export const GLASS = {
@@ -119,9 +124,9 @@ export const PULSE = {
 
 // --- Backdrop ---
 export const BACKDROP = {
-  // What the lines draw: "lines" (light lines), "grid", "dots", "hex",
-  // "weave", "rays", "horizon", "tunnel", "room" or "contours". See
-  // shaders/backdropPatterns/.
+  // What the lines draw: "lines" (light lines), "grid", "kagome" (a lattice
+  // of hexagons and triangles), "dots", "hex", "weave", "rays", "horizon",
+  // "tunnel", "room" or "contours". See shaders/backdropPatterns/.
   pattern: "lines",
   radius: 40,
   baseTop: "#0b0e18",
@@ -132,7 +137,7 @@ export const BACKDROP = {
   lineIntensity: 0.75,
   lineDensity: 16, // Lines per backdrop unit; for the tunnel its ribs, for the room cells per wall
   lineWidth: 0.025, // Fraction of the gap between lines; for the dots their largest size
-  cellGlow: 0, // The grid and hex only: how brightly their cells flare up now and then
+  cellGlow: 0, // The grid, kagome and hex only: how brightly their cells flare up now and then
   lineDrift: 0.006, // Light lines only: backdrop units per second of upward drift
   speed: 1, // How fast the other patterns move: the grid drifts, the horizon scrolls, the tunnel rushes
   spinBoost: 0, // How much a spinning cube speeds that up, per rad/s above the idle tumble

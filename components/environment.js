@@ -12,6 +12,16 @@ const PANELS = [
   { size: [0.8, 0.8], position: [-6, 6, 6], intensity: 14, color: 0xffffff }, // Sparkle kicker
 ];
 
+// The studio's walls: a dim cool sky fading to a dark floor, so every face of
+// the glass reflects a slightly different shade and the solid reads as solid
+// even where no panel catches it
+const SWEEP = [
+  { at: -1, color: 0x020203 },
+  { at: -0.1, color: 0x07090e },
+  { at: 0.35, color: 0x1d2638 },
+  { at: 1, color: 0x45577a },
+];
+
 /**
  * Renders a procedural studio into a prefiltered environment map.
  * @param {THREE.WebGLRenderer} renderer
@@ -20,11 +30,7 @@ const PANELS = [
 export function createStudioEnvironment(renderer) {
   const envScene = new THREE.Scene();
 
-  const room = new THREE.Mesh(
-    new THREE.SphereGeometry(20, 32, 16),
-    new THREE.MeshBasicMaterial({ color: 0x050608, side: THREE.BackSide })
-  );
-  envScene.add(room);
+  envScene.add(createRoom());
 
   for (const panel of PANELS) {
     envScene.add(createPanel(panel));
@@ -40,6 +46,30 @@ export function createStudioEnvironment(renderer) {
   });
 
   return envMap;
+}
+
+/** A sphere around the studio, shaded from floor to sky by SWEEP */
+function createRoom() {
+  const geometry = new THREE.SphereGeometry(20, 32, 24);
+  const position = geometry.getAttribute("position");
+  const colors = new Float32Array(position.count * 3);
+  const color = new THREE.Color();
+  const low = new THREE.Color();
+  const high = new THREE.Color();
+  for (let i = 0; i < position.count; i++) {
+    const height = position.getY(i) / 20;
+    const upper = SWEEP.findIndex((stop) => stop.at >= height);
+    const a = SWEEP[Math.max(0, upper - 1)];
+    const b = SWEEP[Math.max(0, upper)];
+    const t = b.at > a.at ? (height - a.at) / (b.at - a.at) : 0;
+    color.lerpColors(low.setHex(a.color), high.setHex(b.color), t);
+    color.toArray(colors, i * 3);
+  }
+  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  return new THREE.Mesh(
+    geometry,
+    new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })
+  );
 }
 
 function createPanel({ size, position, intensity, color }) {

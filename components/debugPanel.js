@@ -58,6 +58,9 @@ export function createDebugPanel(applySettings) {
   glass.add(SOLID, "form", Object.keys(SOLIDS));
   glass.add(SOLID, "size", 0.4, 1.4, 0.01).name("size (centre to face)");
   glass.add(SOLID, "rounding", 0.01, 0.3, 0.005).name("edge rounding");
+  glass.add(SOLID, "cutFrost", 0, 0.6, 0.01).name("frost where cut");
+  glass.add(SOLID, "cutMilk", 0, 0.2, 0.005).name("milk where cut");
+  glass.add(SOLID, "cutSheen", 0, 1, 0.01).name("sheen where cut");
   glass.add(GLASS, "roughness", 0, 0.5, 0.005);
   glass.add(GLASS, "thickness", 0, 4, 0.05);
   glass.add(GLASS, "ior", 1, 2.4, 0.01);
@@ -140,7 +143,7 @@ export function createDebugPanel(applySettings) {
   backdrop.add(BACKDROP, "lineIntensity", 0, 3, 0.05);
   backdrop.add(BACKDROP, "lineDensity", 1, 80, 1);
   backdrop.add(BACKDROP, "lineWidth", 0.01, 1, 0.005);
-  backdrop.add(BACKDROP, "cellGlow", 0, 1, 0.01).name("cell glow (grid, hex)");
+  backdrop.add(BACKDROP, "cellGlow", 0, 1, 0.01).name("cell glow (grid, kagome, hex)");
   backdrop.add(BACKDROP, "lineDrift", -0.1, 0.1, 0.001).name("drift (light lines)");
   backdrop.add(BACKDROP, "speed", -3, 3, 0.05);
   backdrop.add(BACKDROP, "spinBoost", 0, 2, 0.05).name("speed from spin");

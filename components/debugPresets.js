@@ -74,6 +74,21 @@ export const BACKDROP_PRESETS = {
     lineWidth: 0.025,
     cellGlow: 0.3,
   },
+  // Hexagons ringed by triangles, the triangle grid rectified like the
+  // glass; charging slides its lines back into plain triangles
+  "Kagome": {
+    ...GRID,
+    pattern: "kagome",
+    baseTop: "#08141c",
+    baseBottom: "#020608",
+    glowColor: "#123c4c",
+    glowStrength: 0.85,
+    lineColor: "#a8e4ec",
+    lineIntensity: 0.45,
+    lineDensity: 15,
+    lineWidth: 0.022,
+    cellGlow: 0.25,
+  },
   // A halftone of dots, growing towards the cube and swelling in slow waves
   "Halftone": {
     ...LIGHT_LINES,
@@ -191,6 +206,7 @@ export const LOOKS = {
   "sundbergsolutions.se (default)": look("Light lines (default)", "Champagne (default)"),
   "Blueprint": look("Grid", "Ice"),
   "Lit grid": look("Lit grid", "Champagne (default)"),
+  "Kagome": look("Kagome", "Champagne (default)"),
   "Halftone": look("Halftone", "Champagne (default)"),
   "Hive": look("Hive", "Gold"),
   "Weave": look("Weave", "White"),
