@@ -32,7 +32,7 @@ describe("settings store", () => {
     expect(CORE.faceGlow).toBe(2);
   });
 
-  it("keeps whole looks as presets, and copies a preset's changes", () => {
+  it("keeps whole looks as presets, and copies their changes", () => {
     const store = createSettingsStore();
     CORE.faceGlow = 2.5;
     CORE.glyph = "Helvetiker Bold";
@@ -44,11 +44,30 @@ describe("settings store", () => {
     expect(CORE.faceGlow).toBe(2.5);
     expect(CORE.glyph).toBe("Helvetiker Bold");
     const changes = { CORE: { faceGlow: 2.5, glyph: "Helvetiker Bold" } };
-    expect(JSON.parse(store.presets.changes("Bright"))).toEqual(changes);
     expect(JSON.parse(store.presets.all())).toEqual({ Bright: changes });
 
     store.presets.remove("Bright");
     expect(store.presets.names()).toEqual([]);
+  });
+
+  it("lists built-in looks first, and tells which look the settings match", () => {
+    const looks = { Plain: {}, Bright: { CORE: { faceGlow: 2.5 } } };
+    const store = createSettingsStore({ looks });
+    expect(store.presets.matching()).toBe("Plain");
+
+    store.presets.load("Bright");
+    expect(CORE.faceGlow).toBe(2.5);
+    expect(store.presets.matching()).toBe("Bright");
+
+    CORE.size = 0.5;
+    expect(store.presets.matching()).toBeUndefined();
+    store.presets.save("Small");
+    expect(store.presets.names()).toEqual(["Plain", "Bright", "Small"]);
+    expect(store.presets.matching()).toBe("Small");
+    expect(store.presets.isBuiltIn("Bright")).toBe(true);
+    expect(store.presets.isBuiltIn("Small")).toBe(false);
+    // Only the saved ones are copied; the built-in ones are in the source
+    expect(Object.keys(JSON.parse(store.presets.all()))).toEqual(["Small"]);
   });
 
   it("loads a preset over the defaults, not over the last look", () => {

@@ -1,6 +1,9 @@
 # SpinCube
 
-A glass cube with a glowing S at its heart, built with Three.js.
+A glass solid with a glowing S at its heart, built with Three.js. It began
+as a cube and kept the name; it is now cut as an octahedron, and can be a
+tetrahedron, a truncated tetrahedron, a cuboctahedron, an icosahedron or the
+cube again.
 
 Live at **https://spincube.sundbergsolutions.se**.
 
@@ -44,20 +47,51 @@ just those changes on the clipboard as JSON, in the shape `overrides` takes
 and ready to paste into `constants.js`; **Copy all settings** copies every
 value, and **Reset to defaults** clears them.
 
-**Presets** offers whole looks: **Defaults**, the built-in looks in
-`components/debugPresets.js` (**Original** is the S before Inter Black,
-exactly; then Breathing, Ice chrome, White, Frosted, Prism, Neon, Ember, Calm
-and Turntable), and your own, kept in localStorage. **Save current as
-preset** stores every value under the name above it, picking one from
-**load** brings it back, and **Copy preset** / **Copy all presets** copy
-their changes from the defaults in the same JSON shape.
+**Presets** switches between whole looks. Its **look** dropdown lists the
+built-in looks (`LOOKS` in `components/debugPresets.js`: the default, which
+is what sundbergsolutions.se shows, then Blueprint, Lit grid, Halftone, Hive,
+Weave, Warp, Gravity well, Synthwave, Wormhole, Cube room and Topography,
+then Original S, Breathing, Frosted, Prism, Neon, Calm and Turntable),
+then any you saved, and always shows the one the settings match,
+or "custom" once anything is changed. **Save current as preset** stores every
+value in localStorage under the name above it, **Delete preset** deletes the
+saved look showing, and **Copy all presets** copies the saved looks' changes
+from the defaults in the same JSON shape. The smaller preset dropdowns
+(emboss, glow, backdrop) also show what the values match, so a fresh page
+shows the defaults.
+
+**Backdrop** picks what the lines draw (`BACKDROP.pattern`), with a preset
+for each:
+- **lines**, the light lines (the default);
+- **grid**, square cells drifting up; with **cell glow** above 0 its cells
+  flare up and fade one by one, more of them near the cube (Lit grid); with
+  **gravity well** above 0 it sags in around the cube and follows it as the
+  camera drifts (Gravity well);
+- **dots**, a halftone: dots that grow towards the cube and swell in slow
+  waves, **lineWidth** setting the largest (Halftone);
+- **hex**, a honeycomb, whose cells **cell glow** lights up as the grid's
+  (Hive);
+- **weave**, Truchet tiles linking up into meandering loops, with sparks
+  running along them (Weave);
+- **rays**, streaks flying out from the cube like stars at warp speed, faster
+  when it spins (Warp);
+- **horizon**, a floor and ceiling running off to a horizon behind the cube,
+  scrolling towards you;
+- **tunnel**, rushing down a tunnel behind the cube;
+- **room**, inside a huge gridded cube that turns with the glass one
+  (**turn with cube**), so a throw swings it round;
+- **contours**, the level lines of a churning noise field.
+
+**speed** sets how fast the moving patterns go, and **speed from spin** speeds
+them up while the cube spins faster than its idle tumble, so throwing it sends
+the tunnel, the horizon, the weave's sparks or the warp into a rush. Charging deepens the gravity well for
+every pattern but the light lines, which bend in their own way.
 
 The panel's **The S** folder has a **font** dropdown that swaps the letter
 for other candidate glyphs (`assets/glyphCandidates.js`, loaded only with
 the panel) and its **size**, then **Emboss** (a preset, the bevel's height,
-width and roundness, whether it's cut into the face or built out around the
-letter, and the letter's depth), **Glow** (a preset, colour and strength,
-and how much and how fast it breathes), **Spin** (its own spin, how far and how fast it rocks, and
+width and roundness, and the letter's depth), **Glow** (a preset, colour
+and strength), **Spin** (its own spin, how far and how fast it rocks, and
 the spring that turns it back to face you, which the cube's spin drags at)
 and **Metal** (colour, roughness, reflection and glow). **Hide controls**
 clears the panel off the scene; **d** brings it back, or the **Controls**
@@ -121,6 +155,16 @@ Recheck the embed after any three upgrade.
 
 - **Glass**: `MeshPhysicalMaterial` with transmission, dispersion, a little
   iridescence and both faces rendered, so the inner faces add depth.
+- **The solid**: `SOLID.form` picks what the glass is cut as (the panel's
+  Glass folder has it as **form**). The tetrahedron's family is all there:
+  `tetrahedron`, `truncated` (corners cut a third of the way along each
+  edge) and `octahedron` (cut to the middle of each edge: the rectified
+  tetrahedron, the default), plus `cube`, `cuboctahedron` and `icosahedron`.
+  `utils/solids.js` lists each one's corners, and `utils/roundedHull.js`
+  rounds any convex solid off: flat faces, quarter-pipe edges and spherical
+  corners with exact normals. `SOLID.size` is the distance from the centre
+  to the faces, so the S has the same room in every form (which makes the
+  tetrahedron a big one).
 - **Reflections**: a procedural studio of emissive softboxes and strip lights,
   prefiltered once with `PMREMGenerator` and slowly rotated.
 - **The S**: a single glyph from Inter Black, embedded in
@@ -128,7 +172,12 @@ Recheck the embed after any three upgrade.
   cut into the letter, so they sit inset like an embossed sign. The bevel
   and the sides are polished metal.
 - **Backdrop**: one shader on a large sphere draws the gradient, nebula glow,
-  light lines and the pulse ripple.
+  the lines and the pulse ripple. The lines come from a pattern chunk in
+  `shaders/backdropPatterns/`; switching pattern swaps the shader. Before the
+  pattern is drawn, the backdrop is bent around where the cube appears on it
+  (the gravity well). `utils/backdropMotion.js` works that spot out from the
+  camera, and integrates the pattern time and the room's turn from the
+  cube's spin.
 - **Motion**: quaternion spins integrated from angular velocity, plus damped
   springs with substeps. All of it is independent of the frame rate and unit
   tested (`utils/`, `tests/`).
@@ -144,8 +193,10 @@ Recheck the embed after any three upgrade.
 - `constants.js` – all tunable parameters
 - `components/` – scene pieces (stage, environment, backdrop, cube, dust,
   post-processing, debug panel)
-- `shaders/` – GLSL, one file per shader
-- `utils/` – springs, rotation maths, input and the motion model
+- `shaders/` – GLSL, one file per shader; `shaders/backdropPatterns/` holds
+  the backdrop's patterns
+- `utils/` – springs, rotation maths, input, the solids, the motion model and the
+  backdrop's motion
 - `tests/` – Vitest unit tests
 
 ## Deployment

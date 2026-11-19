@@ -1,25 +1,39 @@
 import { afterEach, describe, expect, it } from "vitest";
 import * as SETTINGS from "../constants.js";
-import { GLYPHS } from "../assets/glyphs.js";
-import { GLYPH_CANDIDATES } from "../assets/glyphCandidates.js";
-import { EMBOSS_PRESETS, GLOW_PRESETS, LOOK_PRESETS } from "../components/debugPresets.js";
-import { applyOverrides } from "../utils/settings.js";
+import { BACKDROP_PATTERNS } from "../shaders/backdropPatterns/index.js";
+import { BACKDROP_PRESETS, EMBOSS_PRESETS, GLOW_PRESETS, LOOKS } from "../components/debugPresets.js";
+import { applyOverrides, diffSettings, matchingPreset } from "../utils/settings.js";
 
-// Every group a look touches, put back after each test
-const touched = [...new Set(Object.values(LOOK_PRESETS).flatMap(Object.keys))];
-const original = structuredClone(Object.fromEntries(touched.map((group) => [group, SETTINGS[group]])));
-afterEach(() => applyOverrides(structuredClone(original)));
+const { BACKDROP, CORE } = SETTINGS;
+const GROUPS = ["BACKDROP", "CORE", "FINISH"];
+const original = structuredClone(Object.fromEntries(GROUPS.map((group) => [group, SETTINGS[group]])));
 
-const glyphs = { ...GLYPHS, ...GLYPH_CANDIDATES };
+afterEach(() => {
+  applyOverrides(structuredClone(original));
+});
 
 describe("debug presets", () => {
-  // A typo would only show up as an alert in the panel
-  it.each(Object.entries(LOOK_PRESETS))("the %s look fits the settings", (name, look) => {
-    expect(() => applyOverrides(look)).not.toThrow();
-    expect(glyphs[SETTINGS.CORE.glyph]).toBeDefined();
+  it("show the default ones on a fresh page", () => {
+    expect(matchingPreset(EMBOSS_PRESETS, CORE)).toBe("Strong, deep (default)");
+    expect(matchingPreset(GLOW_PRESETS, CORE)).toBe("Champagne (default)");
+    expect(matchingPreset(BACKDROP_PRESETS, BACKDROP)).toBe("Light lines (default)");
   });
 
-  it.each(Object.entries({ ...EMBOSS_PRESETS, ...GLOW_PRESETS }))("%s sets S settings only", (name, values) => {
-    expect(() => applyOverrides({ CORE: values })).not.toThrow();
+  it("give every backdrop a known pattern and every backdrop value", () => {
+    const keys = Object.keys(BACKDROP_PRESETS["Light lines (default)"]);
+    for (const preset of Object.values(BACKDROP_PRESETS)) {
+      expect(Object.keys(BACKDROP_PATTERNS)).toContain(preset.pattern);
+      expect(Object.keys(preset).sort()).toEqual([...keys].sort());
+    }
+  });
+
+  it("apply as whole looks, the default one changing nothing", () => {
+    for (const look of Object.values(LOOKS)) {
+      expect(() => applyOverrides(structuredClone(look))).not.toThrow();
+    }
+    applyOverrides(structuredClone(original));
+    applyOverrides(structuredClone(LOOKS["sundbergsolutions.se (default)"]));
+    const now = Object.fromEntries(GROUPS.map((group) => [group, SETTINGS[group]]));
+    expect(diffSettings(now, original)).toEqual({});
   });
 });

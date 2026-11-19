@@ -2,6 +2,7 @@
 export type SpinCubeSettingGroup =
   | "CAMERA"
   | "RENDER"
+  | "SOLID"
   | "GLASS"
   | "CORE"
   | "SPIN"
@@ -22,7 +23,7 @@ export interface SpinCubeLayout {
 }
 
 export interface SpinCubeOptions {
-  /** Draw the light-line backdrop, or leave the canvas see-through. Default "transparent". */
+  /** Draw the backdrop (light lines, or another BACKDROP.pattern), or leave the canvas see-through. Default "transparent". */
   background?: "scene" | "transparent";
   /** Capture the wheel to zoom. Default false. */
   wheelZoom?: boolean;

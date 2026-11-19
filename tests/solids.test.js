@@ -1,0 +1,75 @@
+import { describe, expect, it } from "vitest";
+import * as THREE from "three";
+import { SOLIDS, innerRadius } from "../utils/solids.js";
+import { createRoundedHull } from "../utils/roundedHull.js";
+
+describe("solids", () => {
+  it("have the right number of corners, all on the unit sphere", () => {
+    const counts = Object.fromEntries(Object.entries(SOLIDS).map(([name, c]) => [name, c.length]));
+    expect(counts).toEqual({
+      cube: 8,
+      tetrahedron: 4,
+      truncated: 12,
+      octahedron: 6,
+      cuboctahedron: 12,
+      icosahedron: 12,
+    });
+    for (const corners of Object.values(SOLIDS)) {
+      for (const corner of corners) expect(Math.hypot(...corner)).toBeCloseTo(1, 6);
+    }
+  });
+
+  it("know how much room is inside", () => {
+    expect(innerRadius(SOLIDS.tetrahedron)).toBeCloseTo(1 / 3, 6);
+    expect(innerRadius(SOLIDS.octahedron)).toBeCloseTo(1 / Math.sqrt(3), 6);
+    expect(innerRadius(SOLIDS.cube)).toBeCloseTo(1 / Math.sqrt(3), 6);
+    expect(innerRadius(SOLIDS.truncated)).toBeCloseTo(3 / Math.sqrt(33), 6);
+  });
+});
+
+describe("rounded hull", () => {
+  const corners = SOLIDS.octahedron.map((c) => new THREE.Vector3(...c));
+  const geometry = createRoundedHull(corners, 0.1, 6);
+  const position = geometry.getAttribute("position");
+  const normal = geometry.getAttribute("normal");
+
+  it("stands one radius off the solid everywhere", () => {
+    const p = new THREE.Vector3();
+    let furthest = 0;
+    for (let i = 0; i < position.count; i++) {
+      p.fromBufferAttribute(position, i);
+      const nearest = Math.min(...corners.map((c) => c.distanceTo(p)));
+      expect(nearest).toBeCloseTo(0.1, 5);
+      furthest = Math.max(furthest, p.length());
+    }
+    expect(furthest).toBeCloseTo(1.1, 2);
+  });
+
+  it("has unit normals pointing outwards", () => {
+    const p = new THREE.Vector3();
+    const n = new THREE.Vector3();
+    for (let i = 0; i < position.count; i++) {
+      p.fromBufferAttribute(position, i);
+      n.fromBufferAttribute(normal, i);
+      expect(n.length()).toBeCloseTo(1, 5);
+      expect(n.dot(p)).toBeGreaterThan(0);
+    }
+  });
+
+  it("keeps the faces flat", () => {
+    // Most of the surface is the eight faces, each with a single normal
+    const flat = new Set();
+    const n = new THREE.Vector3();
+    let onFace = 0;
+    for (let i = 0; i < normal.count; i++) {
+      n.fromBufferAttribute(normal, i);
+      const s = 1 / Math.sqrt(3);
+      if ([n.x, n.y, n.z].every((v) => Math.abs(Math.abs(v) - s) < 1e-4)) {
+        onFace++;
+        flat.add([n.x, n.y, n.z].map(Math.sign).join());
+      }
+    }
+    expect(flat.size).toBe(8);
+    expect(onFace).toBeGreaterThan(8 * 3);
+  });
+});

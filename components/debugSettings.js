@@ -1,8 +1,8 @@
 import * as SETTINGS from "../constants.js";
-import { applyOverrides, diffSettings } from "../utils/settings.js";
+import { applyOverrides, diffSettings, mergeSettings } from "../utils/settings.js";
 
 // The setting groups the debug panel tunes, copies and saves
-const GROUPS = ["GLASS", "CORE", "SPIN", "CORE_SPRING", "PRESS", "FLOAT", "PULSE", "BACKDROP", "DUST", "BLOOM", "FINISH", "RENDER"];
+const GROUPS = ["SOLID", "GLASS", "CORE", "SPIN", "CORE_SPRING", "PRESS", "FLOAT", "PULSE", "BACKDROP", "DUST", "BLOOM", "FINISH", "RENDER"];
 const SETTINGS_KEY = "spincube:settings";
 const PRESETS_KEY = "spincube:presets";
 
@@ -39,12 +39,19 @@ function writeStored(key, value) {
  *   left alone follows constants.js and a reload picks up where you were;
  * - named presets, each every tuned value, so loading one brings back
  *   exactly that look, whatever the defaults are by then.
+ * Built-in looks join the saved presets, listed first. They are overrides
+ * of the defaults, and can't be replaced or deleted.
+ * @param {Object} [options]
+ * @param {Object<string, Object>} [options.looks] - Built-in looks by name, as overrides
  * @returns {Object} The store
  */
-export function createSettingsStore() {
+export function createSettingsStore({ looks = {} } = {}) {
   const defaults = snapshot();
   const changes = () => diffSettings(snapshot(), defaults);
-  const presets = () => readStored(PRESETS_KEY, {});
+  const saved = () => readStored(PRESETS_KEY, {});
+  const isBuiltIn = (name) => Object.hasOwn(looks, name);
+  const find = (name) => (isBuiltIn(name) ? looks[name] : saved()[name]);
+  const names = () => [...Object.keys(looks), ...Object.keys(saved()).filter((name) => !isBuiltIn(name))];
 
   const store = {
     /** Applies the saved changes; drops them if they no longer fit the settings */
@@ -60,15 +67,6 @@ export function createSettingsStore() {
       applyOverrides(structuredClone(defaults));
       writeStored(SETTINGS_KEY, undefined);
     },
-    /**
-     * Sets the defaults, then `values` over them, so nothing from the last
-     * look lingers. Throws if `values` has settings that don't exist.
-     * @param {Object} values - In the shape applyOverrides takes
-     */
-    load(values) {
-      applyOverrides(structuredClone(defaults));
-      applyOverrides(structuredClone(values));
-    },
     /** @returns {string} The changes from the defaults, as JSON for applyOverrides */
     changes: () => toJSON(changes()),
     /** @returns {string} Every tuned value, as JSON */
@@ -77,26 +75,35 @@ export function createSettingsStore() {
     count: () => countValues(changes()),
 
     presets: {
-      /** @returns {string[]} The saved presets' names, oldest first */
-      names: () => Object.keys(presets()),
+      /** @returns {string[]} The built-in looks, then the saved presets, oldest first */
+      names,
+      isBuiltIn,
       /** Keeps every tuned value as it is now, under `name` */
-      save: (name) => writeStored(PRESETS_KEY, { ...presets(), [name]: snapshot() }),
+      save: (name) => writeStored(PRESETS_KEY, { ...saved(), [name]: snapshot() }),
       remove(name) {
-        const { [name]: _removed, ...rest } = presets();
+        const { [name]: _removed, ...rest } = saved();
         writeStored(PRESETS_KEY, rest);
       },
       /**
        * Brings back a preset's look. Values it doesn't have keep their
        * defaults. Throws if it has settings that no longer exist.
        */
-      load: (name) => store.load(presets()[name]),
-      /** @returns {string} A preset's changes from the defaults, as JSON */
-      changes: (name) => toJSON(diffSettings(presets()[name] ?? {}, defaults)),
-      /** @returns {string} Every preset's changes from the defaults, by name, as JSON */
+      load(name) {
+        applyOverrides(structuredClone(defaults));
+        applyOverrides(structuredClone(find(name)));
+      },
+      /** @returns {string|undefined} The first preset the settings match exactly, if any */
+      matching() {
+        const now = snapshot();
+        return names().find(
+          (name) => Object.keys(diffSettings(now, mergeSettings(defaults, find(name)))).length === 0
+        );
+      },
+      /** @returns {string} Every saved preset's changes from the defaults, by name, as JSON */
       all: () =>
         toJSON(
           Object.fromEntries(
-            Object.entries(presets()).map(([name, values]) => [name, diffSettings(values, defaults)])
+            Object.entries(saved()).map(([name, values]) => [name, diffSettings(values, defaults)])
           )
         ),
     },
