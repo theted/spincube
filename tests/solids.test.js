@@ -12,6 +12,7 @@ describe("solids", () => {
       tetrahedron: 4,
       truncated: 12,
       rectified: 6,
+      octahedron: 6,
       cuboctahedron: 12,
       icosahedron: 12,
     });

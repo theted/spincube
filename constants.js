@@ -22,7 +22,8 @@ export const RENDER = {
 // --- The glass solid ---
 export const SOLID = {
   // What the glass is cut as: "rectified" (the rectified tetrahedron, an
-  // octahedron), "tetrahedron", "truncated" (the truncated tetrahedron),
+  // octahedron whose cut faces are ground), "octahedron" (the same, all
+  // faces clear), "tetrahedron", "truncated" (the truncated tetrahedron),
   // "cube", "cuboctahedron" or "icosahedron". See utils/solids.js.
   form: "rectified",
   size: 0.8, // From the centre to the faces: the room the S has to turn in

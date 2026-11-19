@@ -38,6 +38,8 @@ export const SOLIDS = {
   // The rectified tetrahedron: an octahedron, four of whose eight triangles
   // are what's left of the tetrahedron's faces and four where its corners were
   rectified: unit(permutations([1, 0, 0]).flatMap((p) => signed(p))),
+  // The same shape with all eight faces alike: nothing ground (see CUTS)
+  octahedron: unit(permutations([1, 0, 0]).flatMap((p) => signed(p))),
   // The rectified cube: six squares and eight triangles
   cuboctahedron: unit(permutations([1, 1, 0]).flatMap((p) => signed(p))),
   icosahedron: unit(
@@ -64,7 +66,7 @@ export const CUTS = {
 // it never looks flat. Face on, the rectified one is a six-pointed star, its
 // front and back triangles crossed. The rest keep the cube's three-quarter view.
 const FRONT = { face: [1, 1, -1], up: [0, 1, 0] };
-const FRONTS = { tetrahedron: FRONT, truncated: FRONT, rectified: FRONT };
+const FRONTS = { tetrahedron: FRONT, truncated: FRONT, rectified: FRONT, octahedron: FRONT };
 const TIP = new Euler(0.16, -0.22, 0); // Radians
 const THREE_QUARTER = new Euler(0.3, -0.45, 0);
 

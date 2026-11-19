@@ -167,7 +167,8 @@ Recheck the embed after any three upgrade.
   Glass folder has it as **form**). The tetrahedron's family is all there:
   `tetrahedron`, `truncated` (corners cut a third of the way along each
   edge) and `rectified` (cut to the middle of each edge, which leaves an
-  octahedron: the default), plus `cube`, `cuboctahedron` and `icosahedron`.
+  octahedron: the default), plus `octahedron` (the same shape, every face
+  clear), `cube`, `cuboctahedron` and `icosahedron`.
   Where corners were cut off, the faces are ground glass (`SOLID.cutFrost`,
   `cutMilk` and `cutSheen`), so the rectified tetrahedron shows four clear
   triangles of the tetrahedron it came from and four satin ones where its
