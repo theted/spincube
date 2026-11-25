@@ -3,6 +3,9 @@
 // light-line backdrop.
 
 import { mountSpinCube } from "./index.js";
+import { BACKDROP } from "./constants.js";
+import { BACKDROP_PATTERNS } from "./shaders/backdropPatterns/index.js";
+import { applyOverrides } from "./utils/settings.js";
 
 const cube = mountSpinCube(document.body, {
   background: "scene",
@@ -11,6 +14,20 @@ const cube = mountSpinCube(document.body, {
   touchAction: "none",
   pressAnywhere: true,
 });
+
+// A look to start with, without the debug panel: ?look=Kagome (any of the
+// panel's looks, by name) and/or ?pattern=grid (any BACKDROP.pattern)
+const params = new URLSearchParams(window.location.search);
+if (params.has("look") || params.has("pattern")) {
+  // The looks come with the debug panel's chunk
+  import("./components/debugPresets.js").then(({ LOOKS }) => {
+    const look = params.get("look") ?? "";
+    if (Object.hasOwn(LOOKS, look)) applyOverrides(structuredClone(LOOKS[look]));
+    const pattern = params.get("pattern") ?? "";
+    if (Object.hasOwn(BACKDROP_PATTERNS, pattern)) BACKDROP.pattern = pattern;
+    cube.applySettings();
+  });
+}
 
 // Debug panel: ?debug in the URL, or press "d" during development. Once it's
 // open, "d" hides and shows it in any build.
@@ -24,7 +41,7 @@ function toggleDebugPanel() {
     createDebugPanel(cube.applySettings)
   );
 }
-const debugRequested = new URLSearchParams(window.location.search).has("debug");
+const debugRequested = params.has("debug");
 if (debugRequested) toggleDebugPanel();
 if (import.meta.env.DEV || debugRequested) {
   window.addEventListener("keydown", (event) => {

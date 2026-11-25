@@ -19,15 +19,27 @@ export const RENDER = {
   transmissionScale: 1, // Resolution of the buffer the glass refracts; lower is cheaper
 };
 
-// --- Glass cube ---
-export const CUBE_SIZE = 1.6;
-export const CUBE_RADIUS = 0.09; // Rounded edges catch the light
-export const CUBE_SEGMENTS = 8;
+// --- The glass solid ---
+export const SOLID = {
+  // What the glass is cut as: "rectified" (the rectified tetrahedron, an
+  // octahedron whose cut faces are ground), "octahedron" (the same, all
+  // faces clear), "tetrahedron", "truncated" (the truncated tetrahedron),
+  // "cube", "cuboctahedron" or "icosahedron". See utils/solids.js.
+  form: "rectified",
+  size: 0.8, // From the centre to the faces: the room the S has to turn in
+  rounding: 0.07, // Rounded edges catch the light
+  segments: 8, // Steps across each rounded edge
+  // Where corners were cut off (rectified, truncated, cuboctahedron), the
+  // faces are ground: the roughness they get, 0 for clear glass like the rest
+  cutFrost: 0.1,
+  cutMilk: 0.035, // The light ground glass scatters back, so those faces read even on black
+  cutSheen: 0.45, // Extra thin-film iridescence on those faces
+};
 
 export const GLASS = {
   color: "#ffffff",
   roughness: 0.03,
-  thickness: 0.45, // Refraction strength; higher splits the S into more copies
+  thickness: 0.2, // Refraction strength; higher splits the S into more copies
   ior: 1.5,
   dispersion: 6, // Rainbow fringes on refracted edges
   iridescence: 0.25, // Thin-film sheen on the faces
@@ -113,27 +125,37 @@ export const PULSE = {
 
 // --- Backdrop ---
 export const BACKDROP = {
+  // What the lines draw: "lines" (light lines), "grid", "kagome" (a lattice
+  // of hexagons and triangles), "dots", "hex", "weave", "rays", "horizon",
+  // "tunnel", "room" or "contours". See shaders/backdropPatterns/.
+  pattern: "lines",
   radius: 40,
   baseTop: "#0b0e18",
   baseBottom: "#040508",
   glowColor: "#1e2550", // Nebula behind the cube
   glowStrength: 0.9,
   lineColor: "#c8d8ff",
-  lineIntensity: 0.9,
-  lineDensity: 16, // Line bands per backdrop unit of height
-  lineWidth: 0.025, // Fraction of the band height
-  lineDrift: 0.006, // Backdrop units per second of upward drift
+  lineIntensity: 0.75,
+  lineDensity: 16, // Lines per backdrop unit; for the tunnel its ribs, for the room cells per wall
+  lineWidth: 0.025, // Fraction of the gap between lines; for the dots their largest size
+  cellGlow: 0, // The grid, kagome and hex only: how brightly their cells flare up now and then
+  lineDrift: 0.006, // Light lines only: backdrop units per second of upward drift
+  speed: 1, // How fast the other patterns move: the grid drifts, the horizon scrolls, the tunnel rushes
+  spinBoost: 0, // How much a spinning cube speeds that up, per rad/s above the idle tumble
+  follow: 0, // The room only: the fraction of the cube's spin it turns with
+  warp: 0, // How deep the backdrop sags in around the cube, a gravity well; 0 is flat
+  warpRadius: 0.35, // Size of the well, in backdrop units
   pulseColor: "#ffd6a0", // Colour of the release flash, the S's champagne
   chargePinch: 0.55, // How hard the lines bend towards the cube at full charge
 };
 
 // --- Dust ---
 export const DUST = {
-  count: 650,
+  count: 140,
   innerRadius: 1.8,
   outerRadius: 9,
   size: 0.06, // World-space diameter
-  brightness: 0.45,
+  brightness: 0.3,
   drift: 0.12, // Amplitude of the wandering motion
   chargePull: 0.2, // Fraction the dust shell contracts at full charge
 };
@@ -146,7 +168,7 @@ export const BLOOM = {
 };
 
 export const FINISH = {
-  vignette: 0.55,
+  vignette: 0.3,
   grain: 0.035,
   aberration: 0.0012, // Colour fringing towards the screen edges
 };

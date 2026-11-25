@@ -1,20 +1,29 @@
 import { snoise } from "./noise.js";
+import { gridLine } from "./gridLine.js";
+import { cellLight } from "./cellLight.js";
 
 /**
- * Fragment shader for the backdrop.
+ * Fragment shader for the backdrop, built around one of the patterns in
+ * backdropPatterns/ (BACKDROP.pattern).
  * Layers, back to front:
  *  - a dark vertical gradient
  *  - a slowly churning nebula glow behind the cube
- *  - thin horizontal light lines that the glass cube refracts and disperses
+ *  - the pattern's lines, which the glass cube refracts and disperses
  *  - a ripple that runs outwards through the lines when a pulse is released
  *
  * Most of it is drawn in planar coordinates: the view direction projected
  * onto the plane z = -1 behind the cube. Lines of constant height there look
  * straight on screen, where lines of constant elevation would bow.
+ *
+ * Before the pattern is drawn, the backdrop sags in around the cube like a
+ * gravity well (BACKDROP.warp, deepened by charging): near the cube it is
+ * sampled further out, so the lines there look drawn in towards it.
+ * @param {string} pattern - GLSL defining backdropPattern(q, dir)
+ * @returns {string} The shader source
  */
-
-export const backdropFragmentShader = `
+export const backdropFragmentShader = (pattern) => `
   uniform float u_time;
+  uniform float u_flow; // Pattern time: BACKDROP.speed, sped up while the cube spins
   uniform vec3 u_baseTop;
   uniform vec3 u_baseBottom;
   uniform vec3 u_glowColor;
@@ -24,6 +33,11 @@ export const backdropFragmentShader = `
   uniform float u_lineDensity;
   uniform float u_lineWidth;
   uniform float u_lineDrift;
+  uniform float u_cellGlow;
+  uniform vec2 u_cubeQ; // Where the cube sits on the backdrop, seen from the camera
+  uniform float u_warp;
+  uniform float u_warpRadius;
+  uniform mat3 u_roomRotation; // Into the frame of the room pattern
   uniform vec3 u_pulseColor;
   uniform float u_pulseTime;
   uniform float u_pulseStrength;
@@ -39,10 +53,13 @@ export const backdropFragmentShader = `
   varying vec3 vDir;
 
   ${snoise}
+  ${gridLine}
+  ${cellLight}
+  ${pattern}
 
-  float hash11(float n) {
-    return fract(sin(n * 127.1) * 43758.5453);
-  }
+  #ifndef WELL_CHARGE
+  #define WELL_CHARGE 1.0
+  #endif
 
   void main() {
     vec3 dir = normalize(vDir);
@@ -69,26 +86,15 @@ export const backdropFragmentShader = `
     vec2 lq = q - q / max(r, 1e-4) * push * u_rippleAmplitude;
     float flash = exp(-r2 / 0.02) * u_pulseStrength * exp(-u_pulseTime * 5.0);
 
-    // Light lines: one possible line per band, with a gentle wobble and drift.
-    // Charging bends them in towards the cube, as if it pulls on them.
-    float wobble = snoise(vec3(lq.x * 1.5, lq.y * 3.0, u_time * 0.08)) * 0.006;
-    float pinch = 1.0 + u_charge * u_chargePinch * exp(-lq.x * lq.x / 0.08);
-    float y = (lq.y * pinch + wobble + u_time * u_lineDrift) * u_lineDensity;
-    float id = floor(y);
-    float f = abs(fract(y) - 0.5);
-    float aa = fwidth(y) * 1.2;
-    float halfWidth = u_lineWidth * 0.5;
-    float line = 1.0 - smoothstep(halfWidth, halfWidth + aa, f);
+    // Gravity well around the cube
+    vec2 toCube = lq - u_cubeQ;
+    float well = (u_warp + u_charge * u_chargePinch * WELL_CHARGE) *
+      exp(-dot(toCube, toCube) / (u_warpRadius * u_warpRadius));
+    vec2 pq = lq + toCube * well;
+    // The view direction bent the same way, for patterns drawn on the sphere
+    vec3 pdir = normalize(dir + vec3((pq - q) * max(-dir.z, 0.0), 0.0));
 
-    float presence = step(0.45, hash11(id)); // Only some bands carry a line
-    float brightness = mix(0.25, 1.0, pow(hash11(id + 17.0), 2.0));
-    float flicker = 0.8 + 0.2 * sin(u_time * (0.3 + hash11(id + 3.0)) + id);
-    float extent = mix(0.2, 0.85, hash11(id + 31.0));
-    float shift = (hash11(id + 5.0) - 0.5) * 0.5;
-    float span = smoothstep(extent, extent * 0.4, abs(lq.x + shift));
-    float band = smoothstep(0.5, 0.12, abs(lq.y));
-    float lines = line * presence * brightness * flicker * span * band;
-
+    float lines = backdropPattern(pq, pdir);
     color += u_lineColor * lines * u_lineIntensity * (1.0 + ripple * u_rippleGlow);
     color += u_pulseColor * flash * u_flash;
 
